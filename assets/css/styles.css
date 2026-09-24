@@ -1,0 +1,326 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 100vh;
+}
+
+/* Username screen */
+.username-container {
+    width: 400px;
+    background-color: white;
+    padding: 35px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+.username-box h2 {
+    color: #111827;
+    margin-bottom: 10px;
+}
+
+.username-box p {
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* Username input */
+#usernameInput {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+#usernameInput:focus {
+    border-color: #4f46e5;
+}
+
+/* Join button */
+#usernameButton {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: #4f46e5;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+#usernameButton:hover {
+    background-color: #4338ca;
+}
+
+/* Chat container */
+.chat-container {
+    width: 400px;
+    height: 600px;
+    background-color: white;
+    border-radius: 12px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Chat header */
+.chat-header {
+    background-color: #4f46e5;
+    color: white;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.chat-header h2 {
+    font-size: 18px;
+    margin-bottom: 3px;
+}
+
+#currentUsername {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Connection status */
+#connectionStatus {
+    font-size: 12px;
+    color: #d1d5db;
+}
+
+#connectionStatus.connected {
+    color: #86efac;
+}
+
+#connectionStatus.disconnected {
+    color: #fca5a5;
+}
+
+/* Messages */
+#messages {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    min-height: 0;
+    scrollbar-width: none;
+}
+
+#messages::-webkit-scrollbar {
+    display: none;
+}
+
+/* Message */
+.message {
+    max-width: 70%;
+}
+
+.message .username {
+    display: block;
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+.message p {
+    margin: 0;
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+/* Sent message */
+.sender {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.sender .username {
+    text-align: right;
+}
+
+.sender p {
+    background-color: #4f46e5;
+    color: white;
+    border-bottom-right-radius: 3px;
+}
+
+
+/* Typing indicator */
+.typing-indicator {
+    min-height: 20px;
+    padding: 0 15px;
+    font-size: 13px;
+    color: #888;
+    font-style: italic;
+}
+
+/* Received message */
+.receiver {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+
+.receiver .username {
+    text-align: left;
+}
+
+.receiver p {
+    background-color: #e5e7eb;
+    color: #111;
+    border-bottom-left-radius: 3px;
+}
+
+/* Input area */
+.input-area {
+    display: flex;
+    padding: 12px;
+    gap: 10px;
+    border-top: 1px solid #ddd;
+    flex-shrink: 0;
+}
+
+/* Message input */
+.input-area input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+.input-area input:focus {
+    border-color: #4f46e5;
+}
+
+
+#messageInput {
+    scrollbar-width: none;
+    width: 100%;
+    min-height: 40px;
+    max-height: 120px;
+    border-radius: 8px;
+    padding: 10px;
+    resize: none;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+
+/* Send button */
+.input-area button {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    background-color: #4f46e5;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+#sendButton {
+    flex: 0 0 auto;
+    width: 70px;
+    height: 40px;
+    padding: 0;
+    align-self: center;
+}
+
+.input-area button:hover {
+    background-color: #4338ca;
+}
+
+.input-area button:active {
+    background-color: #3730a3;
+}
+
+
+/* ========================================
+   PRIVATE CHAT LOGIN
+======================================== */
+
+#usernameInput,
+#roomKeyInput {
+    width: 100%;
+
+    padding: 12px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 8px;
+
+    outline: none;
+
+    font-size: 14px;
+
+    margin-bottom: 12px;
+}
+
+#usernameInput:focus,
+#roomKeyInput:focus {
+    border-color: #4f46e5;
+}
+
+
+/* Login Error */
+
+#loginError {
+    color: #dc2626;
+
+    font-size: 13px;
+
+    margin-top: 12px;
+
+    margin-bottom: 0;
+}
+/* Mobile */
+@media (max-width: 500px) {
+    body {
+        align-items: stretch;
+    }
+
+    .chat-container {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .username-container {
+        width: calc(100% - 30px);
+        max-width: 400px;
+    }
+}

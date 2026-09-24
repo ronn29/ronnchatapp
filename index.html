@@ -1,0 +1,164 @@
+</html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Private Chat</title>
+
+    <link
+        rel="stylesheet"
+        href="assets/css/styles.css"
+    >
+</head>
+
+<body>
+
+    <!-- Login -->
+
+    <div
+        class="username-container"
+        id="usernameContainer"
+    >
+
+        <div class="username-box">
+
+            <h2>Private Chat</h2>
+
+            <p>
+                Enter your username and private key.
+            </p>
+
+
+            <!-- Username -->
+
+            <input
+                type="text"
+                id="usernameInput"
+                placeholder="Username"
+                maxlength="30"
+                autocomplete="username"
+                spellcheck="false"
+            >
+
+
+            <!-- Private key -->
+
+            <input
+                type="password"
+                id="roomKeyInput"
+                placeholder="Private key"
+                maxlength="50"
+                autocomplete="off"
+            >
+
+
+            <!-- Login button -->
+
+            <button
+                type="button"
+                id="usernameButton"
+            >
+                Enter Chat
+            </button>
+
+
+            <!-- Login error -->
+
+            <p
+                id="loginError"
+                role="alert"
+            ></p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Chat -->
+
+    <div
+        class="chat-container"
+        id="chatContainer"
+    >
+
+
+        <!-- Header -->
+
+        <div class="chat-header">
+
+            <div>
+
+                <h2>Private Chat</h2>
+
+                <span id="currentUsername"></span>
+
+            </div>
+
+
+            <!-- Connection status -->
+
+            <span
+                id="connectionStatus"
+                class="connecting"
+            >
+                ● Connecting...
+            </span>
+
+        </div>
+
+
+        <!-- Messages -->
+
+        <div
+            id="messages"
+            class="messages"
+            aria-live="polite"
+        ></div>
+
+        <!-- Typing indicator -->
+
+        <div
+            id="typingIndicator"
+            class="typing-indicator"
+        ></div>
+
+        <!-- Message input -->
+
+        <div class="input-area">
+
+            <textarea
+                id="messageInput"
+                placeholder="Type a message..."
+                maxlength="2000"
+                rows="1"
+                autocomplete="off"
+                spellcheck="true"
+            ></textarea>
+
+            <button
+                type="button"
+                id="sendButton"
+            >
+                Send
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- JavaScript -->
+
+    <script
+        src="assets/js/scripts.js"
+    ></script>
+
+</body>
+
+</html>
