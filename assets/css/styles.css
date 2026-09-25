@@ -23,7 +23,24 @@ body {
     color: #222;
     transition: background 0.2s ease, color 0.2s ease;
 }
+body.dark-mode .username-container {
+    background: #121212;
+}
 
+body.dark-mode .username-box {
+    background: #1e1e1e;
+    color: #eeeeee;
+}
+
+body.dark-mode .username-box input {
+    background: #2a2a2a;
+    color: #ffffff;
+    border-color: #444;
+}
+
+body.dark-mode .username-box input::placeholder {
+    color: #999;
+}
 .theme-toggle {
     width: 40px;
     height: 40px;
