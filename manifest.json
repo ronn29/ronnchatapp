@@ -1,0 +1,11 @@
+{
+    "name": "Ronn Chat App",
+    "short_name": "Chat",
+    "description": "Private Chat App",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f2f2f2",
+    "theme_color": "#4f46e5",
+    "orientation": "portrait"
+    
+}
