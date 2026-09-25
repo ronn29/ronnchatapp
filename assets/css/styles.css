@@ -7,40 +7,19 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f2f2f2;
-
+    color: #222;
     display: flex;
     justify-content: center;
     align-items: center;
-
     min-height: 100vh;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 
-/* Dark mode */
+/* ========================================
+   THEME TOGGLE
+======================================== */
 
-body {
-    background: #f5f5f5;
-    color: #222;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-body.dark-mode .username-container {
-    background: #121212;
-}
-
-body.dark-mode .username-box {
-    background: #1e1e1e;
-    color: #eeeeee;
-}
-
-body.dark-mode .username-box input {
-    background: #2a2a2a;
-    color: #ffffff;
-    border-color: #444;
-}
-
-body.dark-mode .username-box input::placeholder {
-    color: #999;
-}
 .theme-toggle {
     width: 40px;
     height: 40px;
@@ -48,6 +27,7 @@ body.dark-mode .username-box input::placeholder {
     border: none;
     border-radius: 50%;
     background: transparent;
+    color: inherit;
     font-size: 20px;
     cursor: pointer;
 }
@@ -63,65 +43,13 @@ body.dark-mode .username-box input::placeholder {
 }
 
 
-/* Dark theme */
+/* ========================================
+   LOGIN
+======================================== */
 
-body.dark-mode {
-    background: #121212;
-    color: #eeeeee;
-}
-
-body.dark-mode .username-container {
-    background: #121212;
-}
-
-body.dark-mode .username-box,
-body.dark-mode .chat-container {
-    background: #1e1e1e;
-    color: #eeeeee;
-}
-
-body.dark-mode input,
-body.dark-mode textarea {
-    background: #2a2a2a;
-    color: #ffffff;
-    border-color: #444444;
-}
-
-body.dark-mode input::placeholder,
-body.dark-mode textarea::placeholder {
-    color: #999999;
-}
-
-body.dark-mode .chat-header {
-    background: #1e1e1e;
-    border-color: #333333;
-}
-
-body.dark-mode .messages {
-    background: #121212;
-}
-
-body.dark-mode .message {
-    /* background: #2a2a2a; */
-    color: #ffffff;
-}
-body.dark-mode .typing-indicator {
-    background: #121212;
-}
-body.dark-mode .input-area {
-    background: #1e1e1e;
-    border-color: #333333;
-}
-
-body.dark-mode .theme-toggle:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-
-/* Username screen */
 .username-container {
     width: 400px;
-    background-color: white;
+    background-color: #ffffff;
     padding: 35px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
@@ -139,8 +67,11 @@ body.dark-mode .theme-toggle:hover {
     margin-bottom: 20px;
 }
 
-/* Username input */
-#usernameInput {
+
+/* Username and private key */
+
+#usernameInput,
+#roomKeyInput {
     width: 100%;
     padding: 12px;
     border: 1px solid #ccc;
@@ -148,20 +79,30 @@ body.dark-mode .theme-toggle:hover {
     outline: none;
     font-size: 14px;
     margin-bottom: 12px;
+    background-color: #ffffff;
+    color: #222;
 }
 
-#usernameInput:focus {
+#usernameInput:focus,
+#roomKeyInput:focus {
     border-color: #4f46e5;
 }
 
-/* Join button */
+#usernameInput::placeholder,
+#roomKeyInput::placeholder {
+    color: #888;
+}
+
+
+/* Login button */
+
 #usernameButton {
     width: 100%;
     padding: 12px;
     border: none;
     border-radius: 8px;
     background-color: #4f46e5;
-    color: white;
+    color: #ffffff;
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
@@ -172,11 +113,25 @@ body.dark-mode .theme-toggle:hover {
     background-color: #4338ca;
 }
 
-/* Chat container */
+
+/* Login error */
+
+#loginError {
+    color: #dc2626;
+    font-size: 13px;
+    margin-top: 12px;
+    margin-bottom: 0;
+}
+
+
+/* ========================================
+   CHAT
+======================================== */
+
 .chat-container {
     width: 400px;
     height: 600px;
-    background-color: white;
+    background-color: #ffffff;
     border-radius: 12px;
     display: none;
     flex-direction: column;
@@ -184,10 +139,12 @@ body.dark-mode .theme-toggle:hover {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
+
 /* Chat header */
+
 .chat-header {
     background-color: #4f46e5;
-    color: white;
+    color: #ffffff;
     padding: 14px 18px;
     display: flex;
     justify-content: space-between;
@@ -205,7 +162,9 @@ body.dark-mode .theme-toggle:hover {
     opacity: 0.8;
 }
 
+
 /* Connection status */
+
 #connectionStatus {
     font-size: 12px;
     color: #d1d5db;
@@ -219,7 +178,11 @@ body.dark-mode .theme-toggle:hover {
     color: #fca5a5;
 }
 
-/* Messages */
+
+/* ========================================
+   MESSAGES
+======================================== */
+
 #messages {
     flex: 1;
     padding: 20px;
@@ -229,13 +192,16 @@ body.dark-mode .theme-toggle:hover {
     overflow-y: auto;
     min-height: 0;
     scrollbar-width: none;
+    background-color: #ffffff;
 }
 
 #messages::-webkit-scrollbar {
     display: none;
 }
 
+
 /* Message */
+
 .message {
     max-width: 70%;
 }
@@ -258,7 +224,9 @@ body.dark-mode .theme-toggle:hover {
     line-height: 1.4;
 }
 
+
 /* Sent message */
+
 .sender {
     align-self: flex-end;
     align-items: flex-end;
@@ -270,21 +238,13 @@ body.dark-mode .theme-toggle:hover {
 
 .sender p {
     background-color: #4f46e5;
-    color: white;
+    color: #ffffff;
     border-bottom-right-radius: 3px;
 }
 
 
-/* Typing indicator */
-.typing-indicator {
-    min-height: 20px;
-    padding: 0 15px;
-    font-size: 13px;
-    color: #888;
-    font-style: italic;
-}
-
 /* Received message */
+
 .receiver {
     align-self: flex-start;
     align-items: flex-start;
@@ -296,59 +256,83 @@ body.dark-mode .theme-toggle:hover {
 
 .receiver p {
     background-color: #e5e7eb;
-    color: #111;
+    color: #111111;
     border-bottom-left-radius: 3px;
 }
 
-/* Input area */
+
+/* ========================================
+   TYPING INDICATOR
+======================================== */
+
+.typing-indicator {
+    min-height: 20px;
+    padding: 0 15px;
+    font-size: 13px;
+    color: #888;
+    font-style: italic;
+    background-color: #ffffff;
+}
+
+
+/* ========================================
+   INPUT AREA
+======================================== */
+
 .input-area {
     display: flex;
     padding: 12px;
     gap: 10px;
     border-top: 1px solid #ddd;
+    background-color: #ffffff;
     flex-shrink: 0;
 }
 
+
 /* Message input */
-.input-area input {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    outline: none;
-    font-size: 14px;
-}
-
-.input-area input:focus {
-    border-color: #4f46e5;
-}
-
 
 #messageInput {
-    scrollbar-width: none;
     width: 100%;
     min-height: 40px;
     max-height: 120px;
-    border-radius: 8px;
     padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
     resize: none;
     overflow-y: auto;
+    scrollbar-width: none;
     box-sizing: border-box;
     font-family: inherit;
     font-size: 16px;
     line-height: 1.4;
     white-space: pre-wrap;
     overflow-wrap: break-word;
+    background-color: #ffffff;
+    color: #222222;
+}
+
+#messageInput::-webkit-scrollbar {
+    display: none;
+}
+
+#messageInput:focus {
+    border-color: #4f46e5;
+}
+
+#messageInput::placeholder {
+    color: #888;
 }
 
 
 /* Send button */
+
 .input-area button {
     padding: 12px 18px;
     border: none;
     border-radius: 8px;
     background-color: #4f46e5;
-    color: white;
+    color: #ffffff;
     cursor: pointer;
     font-size: 14px;
     transition: background-color 0.2s;
@@ -372,44 +356,96 @@ body.dark-mode .theme-toggle:hover {
 
 
 /* ========================================
-   PRIVATE CHAT LOGIN
+   DARK MODE
 ======================================== */
 
-#usernameInput,
-#roomKeyInput {
-    width: 100%;
-
-    padding: 12px;
-
-    border: 1px solid #ccc;
-
-    border-radius: 8px;
-
-    outline: none;
-
-    font-size: 14px;
-
-    margin-bottom: 12px;
-}
-
-#usernameInput:focus,
-#roomKeyInput:focus {
-    border-color: #4f46e5;
+body.dark-mode {
+    background-color: #121212;
+    color: #eeeeee;
 }
 
 
-/* Login Error */
+/* Login */
 
-#loginError {
-    color: #dc2626;
-
-    font-size: 13px;
-
-    margin-top: 12px;
-
-    margin-bottom: 0;
+body.dark-mode .username-container {
+    background-color: #1e1e1e;
+    color: #eeeeee;
 }
-/* Mobile */
+
+body.dark-mode .username-box h2 {
+    color: #ffffff;
+}
+
+body.dark-mode .username-box p {
+    color: #aaaaaa;
+}
+
+body.dark-mode #usernameInput,
+body.dark-mode #roomKeyInput {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border-color: #444444;
+}
+
+body.dark-mode #usernameInput::placeholder,
+body.dark-mode #roomKeyInput::placeholder {
+    color: #999999;
+}
+
+
+/* Chat */
+
+body.dark-mode .chat-container {
+    background-color: #1e1e1e;
+    color: #eeeeee;
+}
+
+body.dark-mode .chat-header {
+    background-color: #4f46e5;
+}
+
+body.dark-mode #messages {
+    background-color: #121212;
+}
+
+body.dark-mode .message .username {
+    color: #999999;
+}
+
+body.dark-mode .receiver p {
+    background-color: #2a2a2a;
+    color: #ffffff;
+}
+
+body.dark-mode .typing-indicator {
+    background-color: #121212;
+    color: #999999;
+}
+
+body.dark-mode .input-area {
+    background-color: #1e1e1e;
+    border-color: #333333;
+}
+
+body.dark-mode #messageInput {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border-color: #444444;
+}
+
+body.dark-mode #messageInput::placeholder {
+    color: #999999;
+}
+
+body.dark-mode .theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
 @media (max-width: 500px) {
     body {
         align-items: stretch;

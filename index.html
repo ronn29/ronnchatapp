@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
@@ -17,6 +18,18 @@
 </head>
 
 <body>
+
+    <!-- Theme toggle -->
+
+    <button
+        type="button"
+        id="themeToggle"
+        class="theme-toggle"
+        aria-label="Toggle dark mode"
+    >
+        🌙
+    </button>
+
 
     <!-- Login -->
 
@@ -33,9 +46,6 @@
                 Enter your username and private key.
             </p>
 
-
-            <!-- Username -->
-
             <input
                 type="text"
                 id="usernameInput"
@@ -45,9 +55,6 @@
                 spellcheck="false"
             >
 
-
-            <!-- Private key -->
-
             <input
                 type="password"
                 id="roomKeyInput"
@@ -56,18 +63,12 @@
                 autocomplete="off"
             >
 
-
-            <!-- Login button -->
-
             <button
                 type="button"
                 id="usernameButton"
             >
                 Enter Chat
             </button>
-
-
-            <!-- Login error -->
 
             <p
                 id="loginError"
@@ -86,14 +87,14 @@
         id="chatContainer"
     >
 
-
-        <!-- Header -->
-
         <div class="chat-header">
 
             <div>
+
                 <h2>Private Chat</h2>
+
                 <span id="currentUsername"></span>
+
             </div>
 
             <div class="header-actions">
@@ -105,19 +106,9 @@
                     ● Connecting...
                 </span>
 
-                <button
-                    type="button"
-                    id="themeToggle"
-                    class="theme-toggle"
-                    aria-label="Toggle dark mode"
-                >
-                    🌙
-                </button>
-
             </div>
 
         </div>
-
 
 
         <!-- Messages -->
@@ -128,12 +119,14 @@
             aria-live="polite"
         ></div>
 
+
         <!-- Typing indicator -->
 
         <div
             id="typingIndicator"
             class="typing-indicator"
         ></div>
+
 
         <!-- Message input -->
 
@@ -160,11 +153,7 @@
     </div>
 
 
-    <!-- JavaScript -->
-
-    <script
-        src="assets/js/scripts.js"
-    ></script>
+    <script src="assets/js/scripts.js"></script>
 
 </body>
 
