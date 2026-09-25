@@ -152,7 +152,7 @@ function setupWebSocket() {
                             SELECT
                                 id,
                                 username,
-                                message,
+                                message
                             FROM messages
                             ORDER BY id DESC
                             LIMIT 100
