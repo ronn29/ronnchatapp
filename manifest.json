@@ -1,11 +1,25 @@
 {
+    "id": "/",
     "name": "Ronn Chat App",
     "short_name": "Chat",
     "description": "Private Chat App",
     "start_url": "/",
     "display": "standalone",
+    "orientation": "portrait",
     "background_color": "#f2f2f2",
     "theme_color": "#4f46e5",
-    "orientation": "portrait"
-    
+    "icons": [
+        {
+            "src": "/assets/icons/icon123.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/icons/icon123.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
 }
