@@ -1,4 +1,3 @@
-</html>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -93,24 +92,32 @@
         <div class="chat-header">
 
             <div>
-
                 <h2>Private Chat</h2>
-
                 <span id="currentUsername"></span>
+            </div>
+
+            <div class="header-actions">
+
+                <span
+                    id="connectionStatus"
+                    class="connecting"
+                >
+                    ● Connecting...
+                </span>
+
+                <button
+                    type="button"
+                    id="themeToggle"
+                    class="theme-toggle"
+                    aria-label="Toggle dark mode"
+                >
+                    🌙
+                </button>
 
             </div>
 
-
-            <!-- Connection status -->
-
-            <span
-                id="connectionStatus"
-                class="connecting"
-            >
-                ● Connecting...
-            </span>
-
         </div>
+
 
 
         <!-- Messages -->
