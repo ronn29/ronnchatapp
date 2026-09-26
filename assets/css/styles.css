@@ -440,6 +440,9 @@ body.dark-mode #messageInput::placeholder {
 body.dark-mode .theme-toggle:hover {
     background: rgba(255, 255, 255, 0.1);
 }
+body.dark-mode .chat-container {
+    box-shadow: 0 4px 15px rgba(29, 104, 88, 0.15);
+}
 
 
 /* ========================================
