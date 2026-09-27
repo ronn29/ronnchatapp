@@ -2,33 +2,46 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
         name="theme-color"
         content="#4f46e5"
-        >
+    >
+
+    <meta
+        name="description"
+        content="Private real-time chat"
+    >
 
     <title>Ronn Chat</title>
+
 
     <link
         rel="stylesheet"
         href="assets/css/styles.css"
     >
+
     <link
-    rel="manifest"
-    href="/manifest.json"
-    >   
+        rel="manifest"
+        href="/manifest.json"
+    >
+
 </head>
+
 
 <body>
 
 
-
-
-    <!-- Login -->
+    <!-- =====================================================
+         LOGIN
+         ===================================================== -->
 
     <div
         class="username-container"
@@ -43,6 +56,7 @@
                 Enter your username and private key.
             </p>
 
+
             <input
                 type="text"
                 id="usernameInput"
@@ -52,6 +66,7 @@
                 spellcheck="false"
             >
 
+
             <input
                 type="password"
                 id="roomKeyInput"
@@ -60,12 +75,14 @@
                 autocomplete="off"
             >
 
+
             <button
                 type="button"
                 id="usernameButton"
             >
                 Enter Chat
             </button>
+
 
             <p
                 id="loginError"
@@ -77,12 +94,20 @@
     </div>
 
 
-    <!-- Chat -->
+
+    <!-- =====================================================
+         CHAT
+         ===================================================== -->
 
     <div
         class="chat-container"
         id="chatContainer"
     >
+
+
+        <!-- =================================================
+             HEADER
+             ================================================= -->
 
         <div class="chat-header">
 
@@ -90,9 +115,12 @@
 
                 <h2>Private Chat</h2>
 
-                <span id="currentUsername"></span>
+                <span
+                    id="currentUsername"
+                ></span>
 
             </div>
+
 
             <div class="header-actions">
 
@@ -103,7 +131,6 @@
                     ● Connecting...
                 </span>
 
-                    <!-- Theme toggle -->
 
                 <button
                     type="button"
@@ -119,7 +146,10 @@
         </div>
 
 
-        <!-- Messages -->
+
+        <!-- =================================================
+             MESSAGES
+             ================================================= -->
 
         <div
             id="messages"
@@ -128,7 +158,10 @@
         ></div>
 
 
-        <!-- Typing indicator -->
+
+        <!-- =================================================
+             TYPING
+             ================================================= -->
 
         <div
             id="typingIndicator"
@@ -136,32 +169,85 @@
         ></div>
 
 
-        <!-- Message input -->
+
+        <!-- =================================================
+             MESSAGE INPUT
+             ================================================= -->
 
         <div class="input-area">
 
-            <textarea
-                id="messageInput"
-                placeholder="Type a message..."
-                maxlength="2000"
-                rows="1"
-                autocomplete="off"
-                spellcheck="true"
-            ></textarea>
 
-            <button
-                type="button"
-                id="sendButton"
+            <!-- Reply preview -->
+
+            <div
+                id="replyBar"
+                class="reply-bar"
             >
-                Send
-            </button>
+
+                <div class="reply-bar-content">
+
+                    <strong
+                        id="replyBarName"
+                    ></strong>
+
+                    <span
+                        id="replyBarText"
+                    ></span>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="cancelReplyButton"
+                    class="cancel-reply-button"
+                    aria-label="Cancel reply"
+                    title="Cancel reply"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+
+            <!-- Input -->
+
+            <div class="message-input-row">
+
+                <textarea
+                    id="messageInput"
+                    placeholder="Type a message..."
+                    maxlength="2000"
+                    rows="1"
+                    autocomplete="off"
+                    spellcheck="true"
+                ></textarea>
+
+
+                <button
+                    type="button"
+                    id="sendButton"
+                >
+                    Send
+                </button>
+
+            </div>
 
         </div>
 
     </div>
 
 
-    <script src="assets/js/scripts.js"></script>
+
+    <!-- =====================================================
+         JAVASCRIPT
+         ===================================================== -->
+
+    <script
+        src="assets/js/scripts.js"
+    ></script>
+
 
 </body>
 
