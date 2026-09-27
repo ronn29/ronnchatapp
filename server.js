@@ -12,6 +12,10 @@ const VALID_ROOM_KEYS = new Set([
     "testing",
 ]);
 
+// ============================================================
+// ALLOWED REACTIONS
+// ============================================================
+
 const ALLOWED_REACTIONS = new Set([
     "🖤",
     "❤️",
@@ -20,6 +24,10 @@ const ALLOWED_REACTIONS = new Set([
     "😢",
     "🥹",
 ]);
+
+// ============================================================
+// DATABASE
+// ============================================================
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -38,10 +46,14 @@ const pool = new Pool({
 
 
 // ============================================================
-// DATABASE
+// DATABASE INITIALIZATION
 // ============================================================
 
 async function initializeDatabase() {
+
+    // ========================================================
+    // MESSAGES
+    // ========================================================
 
     await pool.query(`
         CREATE TABLE IF NOT EXISTS messages (
@@ -68,13 +80,9 @@ async function initializeDatabase() {
     `);
 
 
-    /*
-     * Existing installations may already have
-     * the messages table.
-     *
-     * These ALTER statements safely add the
-     * newer columns without deleting data.
-     */
+    // ========================================================
+    // ADD NEW MESSAGE COLUMNS IF NEEDED
+    // ========================================================
 
     await pool.query(`
         ALTER TABLE messages
@@ -91,7 +99,7 @@ async function initializeDatabase() {
 
 
     // ========================================================
-    // REACTIONS
+    // REACTIONS TABLE
     // ========================================================
 
     await pool.query(`
@@ -108,16 +116,50 @@ async function initializeDatabase() {
 
             created_at TIMESTAMPTZ
                 NOT NULL
-                DEFAULT NOW(),
-
-            UNIQUE(
-                message_id,
-                username,
-                reaction
-            )
+                DEFAULT NOW()
         )
     `);
 
+
+    // ========================================================
+    // FIX REACTION CONSTRAINT
+    //
+    // A user can have ONE OF EACH reaction on a message.
+    //
+    // Example:
+    //
+    // user1 + message1 + 🖤
+    // user1 + message1 + ❤️
+    //
+    // Both are allowed.
+    //
+    // But this is NOT allowed:
+    //
+    // user1 + message1 + 🖤
+    // user1 + message1 + 🖤
+    // ========================================================
+
+    await pool.query(`
+        ALTER TABLE message_reactions
+        DROP CONSTRAINT IF EXISTS message_reactions_message_id_username_key
+    `);
+
+
+    await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS
+        message_reactions_message_user_reaction_unique
+
+        ON message_reactions(
+            message_id,
+            username,
+            reaction
+        )
+    `);
+
+
+    // ========================================================
+    // INDEXES
+    // ========================================================
 
     await pool.query(`
         CREATE INDEX IF NOT EXISTS
@@ -151,7 +193,7 @@ app.use(express.static(__dirname));
 
 
 // ============================================================
-// HEALTH
+// HEALTH CHECK
 // ============================================================
 
 app.get("/health", async (req, res) => {
@@ -181,7 +223,16 @@ app.get("/health", async (req, res) => {
 
 
 // ============================================================
-// WEBSOCKET HELPERS
+// WEBSOCKET VARIABLES
+// ============================================================
+
+let httpServer;
+
+let websocketServer;
+
+
+// ============================================================
+// SEND JSON
 // ============================================================
 
 function sendJSON(socket, data) {
@@ -198,10 +249,9 @@ function sendJSON(socket, data) {
 }
 
 
-/*
- * Send data to every authenticated client
- * inside the same room.
- */
+// ============================================================
+// BROADCAST TO ROOM
+// ============================================================
 
 function broadcastToRoom(
     roomKey,
@@ -232,7 +282,7 @@ function broadcastToRoom(
 
 
 // ============================================================
-// REACTION HELPERS
+// GET REACTION COUNTS
 // ============================================================
 
 async function getReactionCounts(
@@ -254,7 +304,9 @@ async function getReactionCounts(
 
                 ORDER BY reaction
             `,
-            [messageId]
+            [
+                messageId,
+            ]
         );
 
 
@@ -275,6 +327,10 @@ async function getReactionCounts(
 }
 
 
+// ============================================================
+// GET REACTION USERS
+// ============================================================
+
 async function getReactionUsers(
     messageId
 ) {
@@ -292,7 +348,9 @@ async function getReactionUsers(
 
                 ORDER BY created_at ASC
             `,
-            [messageId]
+            [
+                messageId,
+            ]
         );
 
 
@@ -307,8 +365,7 @@ async function getReactionUsers(
             !users[row.reaction]
         ) {
 
-            users[row.reaction] =
-                [];
+            users[row.reaction] = [];
         }
 
 
@@ -325,7 +382,7 @@ async function getReactionUsers(
 
 
 // ============================================================
-// CHECK MESSAGE ROOM
+// CHECK MESSAGE BELONGS TO ROOM
 // ============================================================
 
 async function messageBelongsToRoom(
@@ -357,15 +414,6 @@ async function messageBelongsToRoom(
 
 
 // ============================================================
-// HTTP / WEBSOCKET SERVER
-// ============================================================
-
-let httpServer;
-
-let websocketServer;
-
-
-// ============================================================
 // START SERVER
 // ============================================================
 
@@ -375,6 +423,10 @@ async function startServer() {
 
         await initializeDatabase();
 
+
+        // ====================================================
+        // HTTP SERVER
+        // ====================================================
 
         httpServer =
             app.listen(
@@ -389,6 +441,10 @@ async function startServer() {
             );
 
 
+        // ====================================================
+        // WEBSOCKET SERVER
+        // ====================================================
+
         websocketServer =
             new WebSocket.Server({
                 server: httpServer,
@@ -399,7 +455,6 @@ async function startServer() {
 
 
         setupWebSocket();
-
 
     } catch (error) {
 
@@ -443,6 +498,10 @@ function setupWebSocket() {
             socket.roomKey =
                 null;
 
+
+            // ==================================================
+            // MESSAGE RECEIVER
+            // ==================================================
 
             socket.on(
                 "message",
@@ -490,14 +549,14 @@ function setupWebSocket() {
                             const username =
                                 String(
                                     data.username ||
-                                        ""
+                                    ""
                                 ).trim();
 
 
                             const roomKey =
                                 String(
                                     data.roomKey ||
-                                        ""
+                                    ""
                                 ).trim();
 
 
@@ -572,7 +631,7 @@ function setupWebSocket() {
 
 
                             // ==================================================
-                            // LOAD HISTORY
+                            // LOAD MESSAGE HISTORY
                             // ==================================================
 
                             let history;
@@ -599,8 +658,11 @@ function setupWebSocket() {
 
 
                                                 CASE
+
                                                     WHEN replied.id IS NOT NULL
+
                                                     THEN json_build_object(
+
                                                         'id',
                                                         replied.id,
 
@@ -609,14 +671,18 @@ function setupWebSocket() {
 
                                                         'message',
                                                         replied.message
+
                                                     )
 
                                                     ELSE NULL
+
                                                 END AS reply,
 
 
                                                 COALESCE(
+
                                                     (
+
                                                         SELECT
                                                             json_object_agg(
                                                                 r.reaction,
@@ -624,6 +690,7 @@ function setupWebSocket() {
                                                             )
 
                                                         FROM (
+
                                                             SELECT
                                                                 reaction,
 
@@ -639,10 +706,13 @@ function setupWebSocket() {
 
                                                             GROUP BY
                                                                 reaction
+
                                                         ) r
+
                                                     ),
 
                                                     '{}'::json
+
                                                 ) AS reactions
 
 
@@ -669,7 +739,9 @@ function setupWebSocket() {
 
                                             LIMIT 100
                                         `,
-                                        [roomKey]
+                                        [
+                                            roomKey,
+                                        ]
                                     );
 
 
@@ -731,12 +803,6 @@ function setupWebSocket() {
                             );
 
 
-                            /*
-                             * Reverse history so
-                             * oldest message appears
-                             * first.
-                             */
-
                             sendJSON(
                                 socket,
                                 {
@@ -771,7 +837,6 @@ function setupWebSocket() {
                                         "You must enter the channel first.",
                                 }
                             );
-
 
                             return;
                         }
@@ -840,7 +905,7 @@ function setupWebSocket() {
                             const messageText =
                                 String(
                                     data.message ||
-                                        ""
+                                    ""
                                 ).trim();
 
 
@@ -869,13 +934,11 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
 
-                            let replyTo =
-                                null;
+                            let replyTo = null;
 
 
                             if (
@@ -919,7 +982,6 @@ function setupWebSocket() {
                                         }
                                     );
 
-
                                     return;
                                 }
 
@@ -946,11 +1008,14 @@ function setupWebSocket() {
                                         }
                                     );
 
-
                                     return;
                                 }
                             }
 
+
+                            // ==================================================
+                            // SAVE MESSAGE
+                            // ==================================================
 
                             const result =
                                 await pool.query(
@@ -1011,8 +1076,7 @@ function setupWebSocket() {
                             // REPLY INFORMATION
                             // ==================================================
 
-                            let reply =
-                                null;
+                            let reply = null;
 
 
                             if (
@@ -1057,7 +1121,7 @@ function setupWebSocket() {
 
 
                             // ==================================================
-                            // BROADCAST MESSAGE
+                            // BROADCAST
                             // ==================================================
 
                             broadcastToRoom(
@@ -1117,7 +1181,7 @@ function setupWebSocket() {
                             const messageText =
                                 String(
                                     data.message ||
-                                        ""
+                                    ""
                                 ).trim();
 
 
@@ -1143,7 +1207,6 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
@@ -1163,7 +1226,6 @@ function setupWebSocket() {
                                             "Message cannot be empty.",
                                     }
                                 );
-
 
                                 return;
                             }
@@ -1185,13 +1247,12 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
 
                             // ==================================================
-                            // CHECK OWNERSHIP
+                            // CHECK MESSAGE
                             // ==================================================
 
                             const existingMessage =
@@ -1241,7 +1302,6 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
@@ -1263,13 +1323,12 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
 
                             // ==================================================
-                            // UPDATE MESSAGE
+                            // UPDATE
                             // ==================================================
 
                             const result =
@@ -1341,7 +1400,6 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
@@ -1351,11 +1409,10 @@ function setupWebSocket() {
 
 
                             // ==================================================
-                            // GET REPLY PREVIEW
+                            // REPLY PREVIEW
                             // ==================================================
 
-                            let reply =
-                                null;
+                            let reply = null;
 
 
                             if (
@@ -1400,7 +1457,7 @@ function setupWebSocket() {
 
 
                             // ==================================================
-                            // GET REACTIONS
+                            // REACTIONS
                             // ==================================================
 
                             const reactions =
@@ -1474,9 +1531,13 @@ function setupWebSocket() {
                             const reaction =
                                 String(
                                     data.reaction ||
-                                        ""
+                                    ""
                                 ).trim();
 
+
+                            // ==================================================
+                            // VALIDATE MESSAGE ID
+                            // ==================================================
 
                             if (
 
@@ -1500,10 +1561,13 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
+
+                            // ==================================================
+                            // VALIDATE REACTION
+                            // ==================================================
 
                             if (
                                 !ALLOWED_REACTIONS.has(
@@ -1522,7 +1586,6 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
@@ -1534,7 +1597,6 @@ function setupWebSocket() {
                             const messageExists =
                                 await messageBelongsToRoom(
                                     messageId,
-
                                     socket.roomKey
                                 );
 
@@ -1554,24 +1616,28 @@ function setupWebSocket() {
                                     }
                                 );
 
-
                                 return;
                             }
 
 
                             // ==================================================
-                            // EXISTING REACTION
+                            // CHECK THIS USER'S REACTION
                             // ==================================================
 
                             const existingReaction =
                                 await pool.query(
                                     `
-                                        SELECT id
+                                        SELECT
+
+                                            id,
+
+                                            reaction
 
                                         FROM
                                             public.message_reactions
 
                                         WHERE
+
                                             message_id =
                                                 $1
 
@@ -1592,6 +1658,11 @@ function setupWebSocket() {
                                     ]
                                 );
 
+
+                            // ==================================================
+                            // SAME REACTION EXISTS
+                            // REMOVE IT
+                            // ==================================================
 
                             if (
                                 existingReaction.rowCount >
@@ -1617,9 +1688,15 @@ function setupWebSocket() {
                                 console.log(
                                     `${socket.username} removed ${reaction} from message ${messageId}`
                                 );
+                            }
 
 
-                            } else {
+                            // ==================================================
+                            // REACTION DOES NOT EXIST
+                            // ADD IT
+                            // ==================================================
+
+                            else {
 
                                 await pool.query(
                                     `
@@ -1645,9 +1722,7 @@ function setupWebSocket() {
                                         ON CONFLICT
                                         (
                                             message_id,
-
                                             username,
-
                                             reaction
                                         )
 
@@ -1670,7 +1745,7 @@ function setupWebSocket() {
 
 
                             // ==================================================
-                            // UPDATED REACTIONS
+                            // GET UPDATED COUNTS
                             // ==================================================
 
                             const reactions =
@@ -1679,11 +1754,19 @@ function setupWebSocket() {
                                 );
 
 
+                            // ==================================================
+                            // GET USERS
+                            // ==================================================
+
                             const reactionUsers =
                                 await getReactionUsers(
                                     messageId
                                 );
 
+
+                            // ==================================================
+                            // BROADCAST
+                            // ==================================================
 
                             broadcastToRoom(
                                 socket.roomKey,
@@ -1743,9 +1826,9 @@ function setupWebSocket() {
             );
 
 
-            // ==========================================================
+            // ==================================================
             // CONNECTION CLOSED
-            // ==========================================================
+            // ==================================================
 
             socket.on(
                 "close",
@@ -1763,9 +1846,9 @@ function setupWebSocket() {
             );
 
 
-            // ==========================================================
+            // ==================================================
             // WEBSOCKET ERROR
-            // ==========================================================
+            // ==================================================
 
             socket.on(
                 "error",
@@ -1783,7 +1866,7 @@ function setupWebSocket() {
 
 
 // ============================================================
-// SERVER SHUTDOWN
+// SHUTDOWN
 // ============================================================
 
 async function shutdown(
@@ -1809,7 +1892,6 @@ async function shutdown(
 
                     client.close(
                         1001,
-
                         "Server shutting down."
                     );
                 }

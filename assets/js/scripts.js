@@ -1386,12 +1386,12 @@ function createReactionPicker(
 
 
     const reactions = [
-        "👍",
+        "🖤",
         "❤️",
-        "😂",
+        "😆",
         "😮",
         "😢",
-        "👎"
+        "🥹"
     ];
 
 
