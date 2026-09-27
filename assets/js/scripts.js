@@ -68,6 +68,13 @@ let replyingToMessage = null;
 
 
 // ============================================================
+// EDIT STATE
+// ============================================================
+
+let editingMessage = null;
+
+
+// ============================================================
 // SAVED LOGIN
 // ============================================================
 
@@ -94,24 +101,24 @@ const socket =
 
 socket.onopen = () => {
 
-    console.log("WebSocket connected");
+    console.log(
+        "WebSocket connected"
+    );
 
 
     connectionStatus.textContent =
         "● Connected";
 
+
     connectionStatus.classList.remove(
         "disconnected"
     );
+
 
     connectionStatus.classList.add(
         "connected"
     );
 
-
-    // --------------------------------------------------------
-    // Restore previous login
-    // --------------------------------------------------------
 
     if (
         savedUsername &&
@@ -131,7 +138,6 @@ socket.onopen = () => {
 
         socket.send(
             JSON.stringify({
-
                 type: "login",
 
                 username:
@@ -139,12 +145,9 @@ socket.onopen = () => {
 
                 roomKey:
                     savedRoomKey
-
             })
         );
-
     }
-
 };
 
 
@@ -160,7 +163,10 @@ socket.onmessage = (event) => {
             JSON.parse(event.data);
 
 
-        console.log("SERVER:", data);
+        console.log(
+            "SERVER:",
+            data
+        );
 
 
         // ====================================================
@@ -171,10 +177,11 @@ socket.onmessage = (event) => {
             data.type === "login"
         ) {
 
-            handleLoginResponse(data);
+            handleLoginResponse(
+                data
+            );
 
             return;
-
         }
 
 
@@ -186,10 +193,11 @@ socket.onmessage = (event) => {
             data.type === "history"
         ) {
 
-            handleHistory(data);
+            handleHistory(
+                data
+            );
 
             return;
-
         }
 
 
@@ -201,25 +209,45 @@ socket.onmessage = (event) => {
             data.type === "message"
         ) {
 
-            addMessage(data);
+            addMessage(
+                data
+            );
 
             return;
-
         }
 
 
         // ====================================================
-        // REACTION UPDATE
+        // EDITED MESSAGE
         // ====================================================
 
         if (
-            data.type === "reaction"
+            data.type ===
+            "message_edited"
         ) {
 
-            updateMessageReactions(data);
+            updateEditedMessage(
+                data
+            );
 
             return;
+        }
 
+
+        // ====================================================
+        // REACTION
+        // ====================================================
+
+        if (
+            data.type ===
+            "reaction"
+        ) {
+
+            updateMessageReactions(
+                data
+            );
+
+            return;
         }
 
 
@@ -228,17 +256,16 @@ socket.onmessage = (event) => {
         // ====================================================
 
         if (
-            data.type === "typing"
+            data.type ===
+            "typing"
         ) {
 
-            // Don't show our own typing notification.
-
             if (
-                data.username === username
+                data.username ===
+                username
             ) {
 
                 return;
-
             }
 
 
@@ -253,11 +280,10 @@ socket.onmessage = (event) => {
 
                 typingIndicator.textContent =
                     "";
-
             }
 
-            return;
 
+            return;
         }
 
 
@@ -266,7 +292,8 @@ socket.onmessage = (event) => {
         // ====================================================
 
         if (
-            data.type === "error"
+            data.type ===
+            "error"
         ) {
 
             console.error(
@@ -274,8 +301,23 @@ socket.onmessage = (event) => {
                 data.error
             );
 
-            return;
 
+            /*
+             * If editing failed, don't leave
+             * the user stuck in edit mode.
+             */
+            if (
+                editingMessage
+            ) {
+
+                alert(
+                    data.error ||
+                    "Unable to edit message."
+                );
+            }
+
+
+            return;
         }
 
     } catch (error) {
@@ -284,9 +326,7 @@ socket.onmessage = (event) => {
             "Failed to process server message:",
             error
         );
-
     }
-
 };
 
 
@@ -302,6 +342,7 @@ function handleLoginResponse(data) {
 
         authenticated =
             true;
+
 
         username =
             data.username;
@@ -329,14 +370,11 @@ function handleLoginResponse(data) {
             "";
 
 
-        // ----------------------------------------------------
-        // Save login
-        // ----------------------------------------------------
-
         localStorage.setItem(
             "chatUsername",
             username
         );
+
 
         localStorage.setItem(
             "chatRoomKey",
@@ -345,7 +383,6 @@ function handleLoginResponse(data) {
 
 
         input.focus();
-
 
     } else {
 
@@ -362,12 +399,11 @@ function handleLoginResponse(data) {
             "chatUsername"
         );
 
+
         localStorage.removeItem(
             "chatRoomKey"
         );
-
     }
-
 }
 
 
@@ -377,15 +413,17 @@ function handleLoginResponse(data) {
 
 function handleHistory(data) {
 
-    messages.innerHTML = "";
+    messages.innerHTML =
+        "";
 
 
     if (
-        !Array.isArray(data.messages)
+        !Array.isArray(
+            data.messages
+        )
     ) {
 
         return;
-
     }
 
 
@@ -396,14 +434,12 @@ function handleHistory(data) {
                 message,
                 false
             );
-
         }
     );
 
 
     messages.scrollTop =
         messages.scrollHeight;
-
 }
 
 
@@ -415,10 +451,6 @@ function addMessage(
     message,
     scroll = true
 ) {
-
-    // --------------------------------------------------------
-    // Validate message
-    // --------------------------------------------------------
 
     if (
         !message ||
@@ -432,13 +464,8 @@ function addMessage(
         );
 
         return;
-
     }
 
-
-    // --------------------------------------------------------
-    // Prevent duplicate messages
-    // --------------------------------------------------------
 
     const existingMessage =
         document.querySelector(
@@ -451,7 +478,6 @@ function addMessage(
     ) {
 
         return;
-
     }
 
 
@@ -472,12 +498,19 @@ function addMessage(
         String(message.id);
 
 
+    messageDiv.style.setProperty(
+        "--reply-progress",
+        "0"
+    );
+
+
     // ========================================================
     // SENDER / RECEIVER
     // ========================================================
 
     if (
-        message.username === username
+        message.username ===
+        username
     ) {
 
         messageDiv.classList.add(
@@ -489,7 +522,6 @@ function addMessage(
         messageDiv.classList.add(
             "receiver"
         );
-
     }
 
 
@@ -507,7 +539,8 @@ function addMessage(
 
 
     usernameElement.textContent =
-        message.username || "Unknown";
+        message.username ||
+        "Unknown";
 
 
     // ========================================================
@@ -527,7 +560,6 @@ function addMessage(
         messageDiv.appendChild(
             replyPreview
         );
-
     }
 
 
@@ -539,8 +571,14 @@ function addMessage(
         document.createElement("p");
 
 
+    messageElement.classList.add(
+        "message-text"
+    );
+
+
     messageElement.textContent =
-        message.message || "";
+        message.message ||
+        "";
 
 
     // ========================================================
@@ -576,13 +614,14 @@ function addMessage(
                 date.toLocaleTimeString(
                     [],
                     {
-                        hour: "2-digit",
-                        minute: "2-digit"
+                        hour:
+                            "2-digit",
+
+                        minute:
+                            "2-digit"
                     }
                 );
-
         }
-
     }
 
 
@@ -594,12 +633,55 @@ function addMessage(
         usernameElement
     );
 
+
     messageDiv.appendChild(
         messageElement
     );
 
-    messageDiv.appendChild(
+
+    // ========================================================
+    // MESSAGE METADATA
+    // ========================================================
+
+    const metadata =
+        document.createElement("div");
+
+
+    metadata.classList.add(
+        "message-metadata"
+    );
+
+
+    metadata.appendChild(
         timeElement
+    );
+
+
+    if (
+        message.edited_at
+    ) {
+
+        const editedElement =
+            document.createElement("span");
+
+
+        editedElement.classList.add(
+            "edited-label"
+        );
+
+
+        editedElement.textContent =
+            "edited";
+
+
+        metadata.appendChild(
+            editedElement
+        );
+    }
+
+
+    messageDiv.appendChild(
+        metadata
     );
 
 
@@ -634,7 +716,7 @@ function addMessage(
 
 
     // ========================================================
-    // ADD MESSAGE TO DOM
+    // ADD MESSAGE
     // ========================================================
 
     messages.appendChild(
@@ -643,12 +725,22 @@ function addMessage(
 
 
     // ========================================================
-    // MESSAGE CLICK
+    // CLICK
     // ========================================================
 
     setupMessageClick(
         messageDiv,
         actions
+    );
+
+
+    // ========================================================
+    // SWIPE TO REPLY
+    // ========================================================
+
+    setupSwipeToReply(
+        messageDiv,
+        message
     );
 
 
@@ -662,9 +754,7 @@ function addMessage(
 
         messages.scrollTop =
             messages.scrollHeight;
-
     }
-
 }
 
 
@@ -681,10 +771,6 @@ function setupMessageClick(
         "click",
         (event) => {
 
-            // ------------------------------------------------
-            // Ignore clicks inside action buttons/picker.
-            // ------------------------------------------------
-
             if (
                 event.target.closest(
                     ".message-actions"
@@ -692,13 +778,8 @@ function setupMessageClick(
             ) {
 
                 return;
-
             }
 
-
-            // ------------------------------------------------
-            // Close other action menus.
-            // ------------------------------------------------
 
             document
                 .querySelectorAll(
@@ -708,30 +789,295 @@ function setupMessageClick(
                     (item) => {
 
                         if (
-                            item !== actions
+                            item !==
+                            actions
                         ) {
 
                             item.classList.remove(
                                 "active"
                             );
-
                         }
-
                     }
                 );
 
 
-            // ------------------------------------------------
-            // Toggle this message's actions.
-            // ------------------------------------------------
-
             actions.classList.toggle(
                 "active"
             );
+        }
+    );
+}
 
+
+// ============================================================
+// SWIPE TO REPLY
+// ============================================================
+
+function setupSwipeToReply(
+    messageDiv,
+    message
+) {
+
+    let startX =
+        0;
+
+    let startY =
+        0;
+
+    let currentX =
+        0;
+
+    let swiping =
+        false;
+
+    let direction =
+        0;
+
+
+    const threshold =
+        65;
+
+    const maxSwipe =
+        95;
+
+
+    messageDiv.addEventListener(
+        "touchstart",
+        (event) => {
+
+            /*
+             * Don't start a swipe when the user
+             * is interacting with a button.
+             */
+            if (
+                event.target.closest(
+                    "button"
+                )
+            ) {
+
+                return;
+            }
+
+
+            const touch =
+                event.touches[0];
+
+
+            startX =
+                touch.clientX;
+
+            startY =
+                touch.clientY;
+
+            currentX =
+                startX;
+
+            direction =
+                messageDiv.classList.contains(
+                    "sender"
+                )
+                    ? -1
+                    : 1;
+
+
+            swiping =
+                true;
+
+
+            messageDiv.classList.add(
+                "swiping"
+            );
+        },
+        {
+            passive: true
         }
     );
 
+
+    messageDiv.addEventListener(
+        "touchmove",
+        (event) => {
+
+            if (
+                !swiping
+            ) {
+
+                return;
+            }
+
+
+            const touch =
+                event.touches[0];
+
+
+            currentX =
+                touch.clientX;
+
+
+            const rawDeltaX =
+                currentX -
+                startX;
+
+
+            const deltaY =
+                Math.abs(
+                    touch.clientY -
+                    startY
+                );
+
+
+            /*
+             * Vertical movement means the user
+             * is probably scrolling.
+             */
+            if (
+                deltaY >
+                Math.abs(
+                    rawDeltaX
+                )
+            ) {
+
+                swiping =
+                    false;
+
+
+                resetSwipe(
+                    messageDiv
+                );
+
+
+                return;
+            }
+
+
+            /*
+             * Receiver messages swipe right.
+             *
+             * Sender messages swipe left.
+             */
+            const deltaX =
+                rawDeltaX *
+                direction;
+
+
+            /*
+             * Only allow the intended direction.
+             */
+            if (
+                deltaX <= 0
+            ) {
+
+                return;
+            }
+
+
+            const distance =
+                Math.min(
+                    deltaX,
+                    maxSwipe
+                );
+
+
+            messageDiv.style.transform =
+                `translateX(${distance * direction}px)`;
+
+
+            messageDiv.style.setProperty(
+                "--reply-progress",
+                Math.min(
+                    distance /
+                    threshold,
+                    1
+                )
+            );
+        },
+        {
+            passive: true
+        }
+    );
+
+
+    messageDiv.addEventListener(
+        "touchend",
+        () => {
+
+            if (
+                !swiping
+            ) {
+
+                return;
+            }
+
+
+            swiping =
+                false;
+
+
+            const rawDeltaX =
+                currentX -
+                startX;
+
+
+            const deltaX =
+                rawDeltaX *
+                direction;
+
+
+            resetSwipe(
+                messageDiv
+            );
+
+
+            if (
+                deltaX >=
+                threshold
+            ) {
+
+                startReply(
+                    message
+                );
+            }
+        }
+    );
+
+
+    messageDiv.addEventListener(
+        "touchcancel",
+        () => {
+
+            swiping =
+                false;
+
+
+            resetSwipe(
+                messageDiv
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// RESET SWIPE
+// ============================================================
+
+function resetSwipe(
+    messageDiv
+) {
+
+    messageDiv.style.transform =
+        "";
+
+
+    messageDiv.classList.remove(
+        "swiping"
+    );
+
+
+    messageDiv.style.setProperty(
+        "--reply-progress",
+        "0"
+    );
 }
 
 
@@ -739,7 +1085,9 @@ function setupMessageClick(
 // CREATE REPLY PREVIEW
 // ============================================================
 
-function createReplyPreview(reply) {
+function createReplyPreview(
+    reply
+) {
 
     const preview =
         document.createElement("div");
@@ -777,21 +1125,19 @@ function createReplyPreview(reply) {
 
 
     text.textContent =
-        reply.message || "";
+        reply.message ||
+        "";
 
 
     preview.appendChild(
         name
     );
 
+
     preview.appendChild(
         text
     );
 
-
-    // --------------------------------------------------------
-    // Click → jump to original message
-    // --------------------------------------------------------
 
     preview.addEventListener(
         "click",
@@ -799,16 +1145,15 @@ function createReplyPreview(reply) {
 
             event.stopPropagation();
 
+
             scrollToMessage(
                 reply.id
             );
-
         }
     );
 
 
     return preview;
-
 }
 
 
@@ -816,7 +1161,9 @@ function createReplyPreview(reply) {
 // CREATE MESSAGE ACTIONS
 // ============================================================
 
-function createMessageActions(message) {
+function createMessageActions(
+    message
+) {
 
     const actions =
         document.createElement("div");
@@ -825,6 +1172,57 @@ function createMessageActions(message) {
     actions.classList.add(
         "message-actions"
     );
+
+
+    // ========================================================
+    // EDIT BUTTON
+    // ========================================================
+
+    if (
+        message.username ===
+        username
+    ) {
+
+        const editButton =
+            document.createElement("button");
+
+
+        editButton.type =
+            "button";
+
+
+        editButton.classList.add(
+            "edit-button"
+        );
+
+
+        editButton.textContent =
+            "✏️ Edit";
+
+
+        editButton.addEventListener(
+            "click",
+            (event) => {
+
+                event.stopPropagation();
+
+
+                startEdit(
+                    message
+                );
+
+
+                actions.classList.remove(
+                    "active"
+                );
+            }
+        );
+
+
+        actions.appendChild(
+            editButton
+        );
+    }
 
 
     // ========================================================
@@ -863,7 +1261,6 @@ function createMessageActions(message) {
             actions.classList.remove(
                 "active"
             );
-
         }
     );
 
@@ -912,14 +1309,12 @@ function createMessageActions(message) {
             ) {
 
                 return;
-
             }
 
 
             toggleReactionPicker(
                 messageDiv
             );
-
         }
     );
 
@@ -945,7 +1340,6 @@ function createMessageActions(message) {
 
 
     return actions;
-
 }
 
 
@@ -953,7 +1347,9 @@ function createMessageActions(message) {
 // CREATE REACTION PICKER
 // ============================================================
 
-function createReactionPicker(message) {
+function createReactionPicker(
+    message
+) {
 
     const picker =
         document.createElement("div");
@@ -978,7 +1374,9 @@ function createReactionPicker(message) {
         (reaction) => {
 
             const choice =
-                document.createElement("button");
+                document.createElement(
+                    "button"
+                );
 
 
             choice.type =
@@ -1020,7 +1418,6 @@ function createReactionPicker(message) {
                     picker.classList.remove(
                         "active"
                     );
-
                 }
             );
 
@@ -1028,13 +1425,11 @@ function createReactionPicker(message) {
             picker.appendChild(
                 choice
             );
-
         }
     );
 
 
     return picker;
-
 }
 
 
@@ -1051,7 +1446,6 @@ function toggleReactionPicker(
     ) {
 
         return;
-
     }
 
 
@@ -1066,7 +1460,6 @@ function toggleReactionPicker(
     ) {
 
         return;
-
     }
 
 
@@ -1075,10 +1468,6 @@ function toggleReactionPicker(
             "active"
         );
 
-
-    // --------------------------------------------------------
-    // Close all pickers
-    // --------------------------------------------------------
 
     document
         .querySelectorAll(
@@ -1090,14 +1479,9 @@ function toggleReactionPicker(
                 item.classList.remove(
                     "active"
                 );
-
             }
         );
 
-
-    // --------------------------------------------------------
-    // Open selected picker
-    // --------------------------------------------------------
 
     if (
         !wasOpen
@@ -1106,9 +1490,7 @@ function toggleReactionPicker(
         picker.classList.add(
             "active"
         );
-
     }
-
 }
 
 
@@ -1116,7 +1498,9 @@ function toggleReactionPicker(
 // CREATE REACTION CONTAINER
 // ============================================================
 
-function createReactionContainer(message) {
+function createReactionContainer(
+    message
+) {
 
     const container =
         document.createElement("div");
@@ -1130,13 +1514,14 @@ function createReactionContainer(message) {
     renderReactions(
         container,
         message.id,
-        message.reactions || {},
-        message.reactionUsers || {}
+        message.reactions ||
+            {},
+        message.reactionUsers ||
+            {}
     );
 
 
     return container;
-
 }
 
 
@@ -1157,11 +1542,11 @@ function renderReactions(
 
     if (
         !reactions ||
-        typeof reactions !== "object"
+        typeof reactions !==
+            "object"
     ) {
 
         return;
-
     }
 
 
@@ -1170,19 +1555,18 @@ function renderReactions(
     ).forEach(
         ([reaction, count]) => {
 
-            // Don't display empty reactions.
-
             if (
                 Number(count) <= 0
             ) {
 
                 return;
-
             }
 
 
             const reactionButton =
-                document.createElement("button");
+                document.createElement(
+                    "button"
+                );
 
 
             reactionButton.type =
@@ -1198,51 +1582,42 @@ function renderReactions(
                 `${reaction} ${count}`;
 
 
-            // ------------------------------------------------
-            // Users who selected this reaction
-            // ------------------------------------------------
-
             const users =
                 reactionUsers &&
                 Array.isArray(
-                    reactionUsers[reaction]
+                    reactionUsers[
+                        reaction
+                    ]
                 )
-                    ? reactionUsers[reaction]
+                    ? reactionUsers[
+                        reaction
+                    ]
                     : [];
 
 
-            // ------------------------------------------------
-            // Highlight current user's reaction
-            // ------------------------------------------------
-
             if (
-                users.includes(username)
+                users.includes(
+                    username
+                )
             ) {
 
                 reactionButton.classList.add(
                     "mine"
                 );
-
             }
 
 
-            // ------------------------------------------------
-            // Tooltip
-            // ------------------------------------------------
-
             if (
-                users.length > 0
+                users.length >
+                0
             ) {
 
                 reactionButton.title =
-                    users.join(", ");
-
+                    users.join(
+                        ", "
+                    );
             }
 
-
-            // ------------------------------------------------
-            // Click reaction → toggle reaction
-            // ------------------------------------------------
 
             reactionButton.addEventListener(
                 "click",
@@ -1255,7 +1630,6 @@ function renderReactions(
                         messageId,
                         reaction
                     );
-
                 }
             );
 
@@ -1263,10 +1637,8 @@ function renderReactions(
             container.appendChild(
                 reactionButton
             );
-
         }
     );
-
 }
 
 
@@ -1284,7 +1656,6 @@ function sendReaction(
     ) {
 
         return;
-
     }
 
 
@@ -1297,8 +1668,8 @@ function sendReaction(
             "Cannot send reaction: WebSocket not connected"
         );
 
-        return;
 
+        return;
     }
 
 
@@ -1316,7 +1687,6 @@ function sendReaction(
 
         })
     );
-
 }
 
 
@@ -1324,15 +1694,18 @@ function sendReaction(
 // UPDATE REACTIONS
 // ============================================================
 
-function updateMessageReactions(data) {
+function updateMessageReactions(
+    data
+) {
 
     if (
-        data.messageId === undefined ||
-        data.messageId === null
+        data.messageId ===
+            undefined ||
+        data.messageId ===
+            null
     ) {
 
         return;
-
     }
 
 
@@ -1347,7 +1720,6 @@ function updateMessageReactions(data) {
     ) {
 
         return;
-
     }
 
 
@@ -1362,17 +1734,17 @@ function updateMessageReactions(data) {
     ) {
 
         return;
-
     }
 
 
     renderReactions(
         reactionContainer,
         data.messageId,
-        data.reactions || {},
-        data.reactionUsers || {}
+        data.reactions ||
+            {},
+        data.reactionUsers ||
+            {}
     );
-
 }
 
 
@@ -1380,7 +1752,21 @@ function updateMessageReactions(data) {
 // START REPLY
 // ============================================================
 
-function startReply(message) {
+function startReply(
+    message
+) {
+
+    /*
+     * Editing and replying are mutually exclusive.
+     */
+
+    if (
+        editingMessage
+    ) {
+
+        cancelEdit();
+    }
+
 
     replyingToMessage =
         message;
@@ -1414,8 +1800,8 @@ function startReply(message) {
             "Reply bar elements are missing from HTML."
         );
 
-        return;
 
+        return;
     }
 
 
@@ -1435,15 +1821,13 @@ function startReply(message) {
     input.focus();
 
 
-    // --------------------------------------------------------
-    // Mobile
-    // --------------------------------------------------------
-
     replyBar.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest"
-    });
+        behavior:
+            "smooth",
 
+        block:
+            "nearest"
+    });
 }
 
 
@@ -1470,7 +1854,6 @@ function cancelReply() {
         replyBar.classList.remove(
             "active"
         );
-
     }
 
 
@@ -1492,7 +1875,6 @@ function cancelReply() {
 
         replyName.textContent =
             "";
-
     }
 
 
@@ -1502,12 +1884,454 @@ function cancelReply() {
 
         replyText.textContent =
             "";
+    }
 
+
+    input.focus();
+}
+
+
+// ============================================================
+// START EDIT
+// ============================================================
+
+function startEdit(
+    message
+) {
+
+    /*
+     * Only allow our own messages.
+     */
+
+    if (
+        message.username !==
+        username
+    ) {
+
+        return;
+    }
+
+
+    /*
+     * Cancel reply mode.
+     */
+
+    if (
+        replyingToMessage
+    ) {
+
+        cancelReply();
+    }
+
+
+    editingMessage =
+        message;
+
+
+    input.value =
+        message.message ||
+        "";
+
+
+    input.style.height =
+        "auto";
+
+
+    input.style.height =
+        Math.min(
+            input.scrollHeight,
+            120
+        ) + "px";
+
+
+    /*
+     * Change Send → Save.
+     */
+
+    button.textContent =
+        "Save";
+
+
+    button.classList.add(
+        "editing"
+    );
+
+
+    /*
+     * Add editing class to composer.
+     */
+
+    const composer =
+        input.closest(
+            ".message-input-container"
+        );
+
+
+    if (
+        composer
+    ) {
+
+        composer.classList.add(
+            "editing-message"
+        );
     }
 
 
     input.focus();
 
+
+    /*
+     * Put cursor at end.
+     */
+
+    try {
+
+        input.setSelectionRange(
+            input.value.length,
+            input.value.length
+        );
+
+    } catch {
+        // Some input types don't support selection.
+    }
+}
+
+
+// ============================================================
+// CANCEL EDIT
+// ============================================================
+
+function cancelEdit() {
+
+    editingMessage =
+        null;
+
+
+    input.value =
+        "";
+
+
+    input.style.height =
+        "40px";
+
+
+    button.textContent =
+        "Send";
+
+
+    button.classList.remove(
+        "editing"
+    );
+
+
+    const composer =
+        input.closest(
+            ".message-input-container"
+        );
+
+
+    if (
+        composer
+    ) {
+
+        composer.classList.remove(
+            "editing-message"
+        );
+    }
+
+
+    input.focus();
+}
+
+
+// ============================================================
+// SAVE EDIT
+// ============================================================
+
+function saveEdit() {
+
+    if (
+        !editingMessage
+    ) {
+
+        return;
+    }
+
+
+    const message =
+        input.value.trim();
+
+
+    if (
+        message ===
+        ""
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !authenticated
+    ) {
+
+        return;
+    }
+
+
+    if (
+        socket.readyState !==
+        WebSocket.OPEN
+    ) {
+
+        console.error(
+            "Cannot edit message: WebSocket not connected"
+        );
+
+
+        return;
+    }
+
+
+    stopTyping();
+
+
+    socket.send(
+        JSON.stringify({
+
+            type:
+                "edit_message",
+
+            messageId:
+                editingMessage.id,
+
+            message:
+                message
+
+        })
+    );
+}
+
+
+// ============================================================
+// UPDATE EDITED MESSAGE
+// ============================================================
+
+function updateEditedMessage(
+    data
+) {
+
+    if (
+        data.id ===
+            undefined ||
+        data.id ===
+            null
+    ) {
+
+        return;
+    }
+
+
+    const messageDiv =
+        document.querySelector(
+            `[data-message-id="${CSS.escape(String(data.id))}"]`
+        );
+
+
+    if (
+        !messageDiv
+    ) {
+
+        return;
+    }
+
+
+    // ========================================================
+    // MESSAGE TEXT
+    // ========================================================
+
+    const messageElement =
+        messageDiv.querySelector(
+            ".message-text"
+        );
+
+
+    if (
+        messageElement
+    ) {
+
+        messageElement.textContent =
+            data.message ||
+            "";
+    }
+
+
+    // ========================================================
+    // REPLY PREVIEW
+    // ========================================================
+
+    if (
+        data.reply
+    ) {
+
+        let replyPreview =
+            messageDiv.querySelector(
+                ".message-reply-preview"
+            );
+
+
+        if (
+            !replyPreview
+        ) {
+
+            /*
+             * Put reply preview before
+             * the message text.
+             */
+
+            replyPreview =
+                createReplyPreview(
+                    data.reply
+                );
+
+
+            if (
+                messageElement
+            ) {
+
+                messageDiv.insertBefore(
+                    replyPreview,
+                    messageElement
+                );
+
+            } else {
+
+                messageDiv.prepend(
+                    replyPreview
+                );
+            }
+
+        }
+    }
+
+
+    // ========================================================
+    // EDITED LABEL
+    // ========================================================
+
+    let metadata =
+        messageDiv.querySelector(
+            ".message-metadata"
+        );
+
+
+    if (
+        !metadata
+    ) {
+
+        metadata =
+            document.createElement(
+                "div"
+            );
+
+
+        metadata.classList.add(
+            "message-metadata"
+        );
+
+
+        if (
+            messageElement
+        ) {
+
+            messageElement.after(
+                metadata
+            );
+
+        } else {
+
+            messageDiv.appendChild(
+                metadata
+            );
+        }
+    }
+
+
+    let editedElement =
+        metadata.querySelector(
+            ".edited-label"
+        );
+
+
+    if (
+        !editedElement
+    ) {
+
+        editedElement =
+            document.createElement(
+                "span"
+            );
+
+
+        editedElement.classList.add(
+            "edited-label"
+        );
+
+
+        metadata.appendChild(
+            editedElement
+        );
+    }
+
+
+    editedElement.textContent =
+        "edited";
+
+
+    // ========================================================
+    // REACTIONS
+    // ========================================================
+
+    if (
+        data.reactions
+    ) {
+
+        const reactionContainer =
+            messageDiv.querySelector(
+                ".message-reactions"
+            );
+
+
+        if (
+            reactionContainer
+        ) {
+
+            renderReactions(
+                reactionContainer,
+                data.id,
+                data.reactions ||
+                    {},
+                data.reactionUsers ||
+                    {}
+            );
+        }
+    }
+
+
+    // ========================================================
+    // FINISH EDITING
+    // ========================================================
+
+    if (
+        editingMessage &&
+        String(
+            editingMessage.id
+        ) ===
+            String(data.id)
+    ) {
+
+        cancelEdit();
+    }
 }
 
 
@@ -1515,7 +2339,9 @@ function cancelReply() {
 // SCROLL TO MESSAGE
 // ============================================================
 
-function scrollToMessage(messageId) {
+function scrollToMessage(
+    messageId
+) {
 
     const target =
         document.querySelector(
@@ -1532,14 +2358,17 @@ function scrollToMessage(messageId) {
             messageId
         );
 
-        return;
 
+        return;
     }
 
 
     target.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
+        behavior:
+            "smooth",
+
+        block:
+            "center"
     });
 
 
@@ -1547,8 +2376,6 @@ function scrollToMessage(messageId) {
         "reply-highlight"
     );
 
-
-    // Restart animation.
 
     void target.offsetWidth;
 
@@ -1568,7 +2395,6 @@ function scrollToMessage(messageId) {
         },
         1600
     );
-
 }
 
 
@@ -1578,16 +2404,30 @@ function scrollToMessage(messageId) {
 
 function sendMessage() {
 
+    /*
+     * If currently editing, Send becomes Save.
+     */
+
+    if (
+        editingMessage
+    ) {
+
+        saveEdit();
+
+        return;
+    }
+
+
     const message =
         input.value.trim();
 
 
     if (
-        message === ""
+        message ===
+        ""
     ) {
 
         return;
-
     }
 
 
@@ -1599,8 +2439,8 @@ function sendMessage() {
             "Cannot send message: not authenticated"
         );
 
-        return;
 
+        return;
     }
 
 
@@ -1613,21 +2453,13 @@ function sendMessage() {
             "Cannot send message: WebSocket not connected"
         );
 
-        return;
 
+        return;
     }
 
 
-    // --------------------------------------------------------
-    // Stop typing
-    // --------------------------------------------------------
-
     stopTyping();
 
-
-    // --------------------------------------------------------
-    // Build payload
-    // --------------------------------------------------------
 
     const payload = {
 
@@ -1636,13 +2468,12 @@ function sendMessage() {
 
         message:
             message
-
     };
 
 
-    // --------------------------------------------------------
-    // Add reply
-    // --------------------------------------------------------
+    // ========================================================
+    // ADD REPLY
+    // ========================================================
 
     if (
         replyingToMessage
@@ -1650,7 +2481,6 @@ function sendMessage() {
 
         payload.replyTo =
             replyingToMessage.id;
-
     }
 
 
@@ -1660,35 +2490,25 @@ function sendMessage() {
     );
 
 
-    // --------------------------------------------------------
-    // Send
-    // --------------------------------------------------------
-
     socket.send(
-        JSON.stringify(payload)
+        JSON.stringify(
+            payload
+        )
     );
 
 
-    // --------------------------------------------------------
-    // Clear input
-    // --------------------------------------------------------
-
     input.value =
         "";
+
 
     input.style.height =
         "40px";
 
 
-    // --------------------------------------------------------
-    // Clear reply
-    // --------------------------------------------------------
-
     cancelReply();
 
 
     input.focus();
-
 }
 
 
@@ -1701,35 +2521,40 @@ function joinChat() {
     const enteredUsername =
         usernameInput.value.trim();
 
+
     const roomKey =
         roomKeyInput.value.trim();
 
 
     if (
-        enteredUsername === ""
+        enteredUsername ===
+        ""
     ) {
 
         loginError.textContent =
             "Please enter a username.";
 
+
         usernameInput.focus();
 
-        return;
 
+        return;
     }
 
 
     if (
-        roomKey === ""
+        roomKey ===
+        ""
     ) {
 
         loginError.textContent =
             "Please enter the channel key.";
 
+
         roomKeyInput.focus();
 
-        return;
 
+        return;
     }
 
 
@@ -1741,8 +2566,8 @@ function joinChat() {
         loginError.textContent =
             "Not connected to the server.";
 
-        return;
 
+        return;
     }
 
 
@@ -1764,7 +2589,6 @@ function joinChat() {
 
         })
     );
-
 }
 
 
@@ -1779,7 +2603,6 @@ function startTyping() {
     ) {
 
         return;
-
     }
 
 
@@ -1789,7 +2612,6 @@ function startTyping() {
     ) {
 
         return;
-
     }
 
 
@@ -1812,7 +2634,6 @@ function startTyping() {
 
             })
         );
-
     }
 
 
@@ -1830,7 +2651,6 @@ function startTyping() {
             },
             1000
         );
-
 }
 
 
@@ -1854,7 +2674,6 @@ function stopTyping() {
     ) {
 
         return;
-
     }
 
 
@@ -1878,9 +2697,7 @@ function stopTyping() {
 
             })
         );
-
     }
-
 }
 
 
@@ -1913,15 +2730,15 @@ usernameInput.addEventListener(
     (event) => {
 
         if (
-            event.key === "Enter"
+            event.key ===
+            "Enter"
         ) {
 
             event.preventDefault();
 
+
             joinChat();
-
         }
-
     }
 );
 
@@ -1935,15 +2752,15 @@ roomKeyInput.addEventListener(
     (event) => {
 
         if (
-            event.key === "Enter"
+            event.key ===
+            "Enter"
         ) {
 
             event.preventDefault();
 
+
             joinChat();
-
         }
-
     }
 );
 
@@ -1956,17 +2773,41 @@ input.addEventListener(
     "keydown",
     (event) => {
 
+        // ----------------------------------------------------
+        // Escape → cancel edit
+        // ----------------------------------------------------
+
         if (
-            event.key === "Enter" &&
+            event.key ===
+                "Escape" &&
+            editingMessage
+        ) {
+
+            event.preventDefault();
+
+
+            cancelEdit();
+
+
+            return;
+        }
+
+
+        // ----------------------------------------------------
+        // Enter → Send / Save
+        // ----------------------------------------------------
+
+        if (
+            event.key ===
+                "Enter" &&
             !event.shiftKey
         ) {
 
             event.preventDefault();
 
+
             sendMessage();
-
         }
-
     }
 );
 
@@ -1979,10 +2820,6 @@ input.addEventListener(
     "input",
     () => {
 
-        // ----------------------------------------------------
-        // Resize textarea
-        // ----------------------------------------------------
-
         input.style.height =
             "auto";
 
@@ -1994,12 +2831,20 @@ input.addEventListener(
             ) + "px";
 
 
-        // ----------------------------------------------------
-        // Typing
-        // ----------------------------------------------------
+        /*
+         * Don't broadcast typing while
+         * editing a message.
+         */
+
+        if (
+            editingMessage
+        ) {
+
+            return;
+        }
+
 
         startTyping();
-
     }
 );
 
@@ -2012,23 +2857,15 @@ document.addEventListener(
     "click",
     (event) => {
 
-        // ----------------------------------------------------
-        // Clicking inside a message is handled by that
-        // message itself.
-        // ----------------------------------------------------
-
         if (
-            event.target.closest(".message")
+            event.target.closest(
+                ".message"
+            )
         ) {
 
             return;
-
         }
 
-
-        // ----------------------------------------------------
-        // Close action menus.
-        // ----------------------------------------------------
 
         document
             .querySelectorAll(
@@ -2040,14 +2877,9 @@ document.addEventListener(
                     actions.classList.remove(
                         "active"
                     );
-
                 }
             );
 
-
-        // ----------------------------------------------------
-        // Close reaction pickers.
-        // ----------------------------------------------------
 
         document
             .querySelectorAll(
@@ -2059,10 +2891,8 @@ document.addEventListener(
                     picker.classList.remove(
                         "active"
                     );
-
                 }
             );
-
     }
 );
 
@@ -2087,13 +2917,13 @@ if (
 
             event.preventDefault();
 
+
             event.stopPropagation();
 
-            cancelReply();
 
+            cancelReply();
         }
     );
-
 }
 
 
@@ -2108,7 +2938,8 @@ const savedTheme =
 
 
 if (
-    savedTheme === "dark"
+    savedTheme ===
+    "dark"
 ) {
 
     document.body.classList.add(
@@ -2122,7 +2953,6 @@ if (
 
         themeToggle.textContent =
             "☀️";
-
     }
 
 } else {
@@ -2133,9 +2963,7 @@ if (
 
         themeToggle.textContent =
             "🌙";
-
     }
-
 }
 
 
@@ -2148,6 +2976,7 @@ if (
         (event) => {
 
             event.preventDefault();
+
 
             event.stopPropagation();
 
@@ -2170,10 +2999,8 @@ if (
                 isDark
                     ? "☀️"
                     : "🌙";
-
         }
     );
-
 }
 
 
@@ -2217,7 +3044,6 @@ socket.onclose = () => {
     connectionStatus.classList.add(
         "disconnected"
     );
-
 };
 
 
@@ -2245,7 +3071,6 @@ socket.onerror = (error) => {
     connectionStatus.classList.add(
         "disconnected"
     );
-
 };
 
 
@@ -2254,7 +3079,8 @@ socket.onerror = (error) => {
 // ============================================================
 
 if (
-    "serviceWorker" in navigator
+    "serviceWorker" in
+    navigator
 ) {
 
     window.addEventListener(
@@ -2271,7 +3097,6 @@ if (
                         console.log(
                             "Service worker registered."
                         );
-
                     }
                 )
                 .catch(
@@ -2281,11 +3106,8 @@ if (
                             "Service worker registration failed:",
                             error
                         );
-
                     }
                 );
-
         }
     );
-
 }
