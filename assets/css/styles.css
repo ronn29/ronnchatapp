@@ -1488,3 +1488,23 @@ body.dark-mode .edit-button:hover {
 body.dark-mode .edited-label {
     color: #888;
 }
+
+
+/* Hide timestamp by default */
+.message-metadata {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    pointer-events: none;
+
+    transition:
+        opacity 0.2s ease,
+        max-height 0.2s ease;
+}
+
+/* Show timestamp when message is tapped */
+.message.timestamp-visible .message-metadata {
+    opacity: 1;
+    max-height: 30px;
+    pointer-events: auto;
+}

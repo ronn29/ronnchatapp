@@ -771,16 +771,16 @@ function setupMessageClick(
         "click",
         (event) => {
 
+            // Don't trigger when tapping buttons
             if (
                 event.target.closest(
                     ".message-actions"
                 )
             ) {
-
                 return;
             }
 
-
+            // Hide menus on other messages
             document
                 .querySelectorAll(
                     ".message-actions.active"
@@ -789,10 +789,8 @@ function setupMessageClick(
                     (item) => {
 
                         if (
-                            item !==
-                            actions
+                            item !== actions
                         ) {
-
                             item.classList.remove(
                                 "active"
                             );
@@ -801,12 +799,39 @@ function setupMessageClick(
                 );
 
 
+            // Hide timestamps on other messages
+            document
+                .querySelectorAll(
+                    ".message.timestamp-visible"
+                )
+                .forEach(
+                    (item) => {
+
+                        if (
+                            item !== messageDiv
+                        ) {
+                            item.classList.remove(
+                                "timestamp-visible"
+                            );
+                        }
+                    }
+                );
+
+
+            // Show/hide this message's timestamp
+            messageDiv.classList.toggle(
+                "timestamp-visible"
+            );
+
+
+            // Show the existing action buttons
             actions.classList.toggle(
                 "active"
             );
         }
     );
 }
+
 
 
 // ============================================================
@@ -1197,7 +1222,7 @@ function createMessageActions(
 
 
         editButton.textContent =
-            "✏️ Edit";
+            "Edit";
 
 
         editButton.addEventListener(
@@ -1243,7 +1268,7 @@ function createMessageActions(
 
 
     replyButton.textContent =
-        "↩ Reply";
+        "Reply";
 
 
     replyButton.addEventListener(
@@ -1288,7 +1313,7 @@ function createMessageActions(
 
 
     reactButton.textContent =
-        "😊 React";
+        "React";
 
 
     reactButton.addEventListener(
