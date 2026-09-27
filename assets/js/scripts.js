@@ -57,6 +57,8 @@ let authenticated = false;
 
 let typingTimeout = null;
 
+let currentlyTyping = false;
+
 
 // ============================================================
 // REPLY STATE
@@ -92,9 +94,7 @@ const socket =
 
 socket.onopen = () => {
 
-    console.log(
-        "WebSocket connected"
-    );
+    console.log("WebSocket connected");
 
 
     connectionStatus.textContent =
@@ -110,7 +110,7 @@ socket.onopen = () => {
 
 
     // --------------------------------------------------------
-    // Restore login
+    // Restore previous login
     // --------------------------------------------------------
 
     if (
@@ -132,14 +132,13 @@ socket.onopen = () => {
         socket.send(
             JSON.stringify({
 
-                type:
-                    "login",
+                type: "login",
 
                 username:
                     savedUsername,
 
                 roomKey:
-                    savedRoomKey,
+                    savedRoomKey
 
             })
         );
@@ -158,15 +157,10 @@ socket.onmessage = (event) => {
     try {
 
         const data =
-            JSON.parse(
-                event.data
-            );
+            JSON.parse(event.data);
 
 
-        console.log(
-            "SERVER:",
-            data
-        );
+        console.log("SERVER:", data);
 
 
         // ====================================================
@@ -177,9 +171,7 @@ socket.onmessage = (event) => {
             data.type === "login"
         ) {
 
-            handleLoginResponse(
-                data
-            );
+            handleLoginResponse(data);
 
             return;
 
@@ -194,9 +186,7 @@ socket.onmessage = (event) => {
             data.type === "history"
         ) {
 
-            handleHistory(
-                data
-            );
+            handleHistory(data);
 
             return;
 
@@ -211,9 +201,7 @@ socket.onmessage = (event) => {
             data.type === "message"
         ) {
 
-            addMessage(
-                data
-            );
+            addMessage(data);
 
             return;
 
@@ -228,9 +216,7 @@ socket.onmessage = (event) => {
             data.type === "reaction"
         ) {
 
-            updateMessageReactions(
-                data
-            );
+            updateMessageReactions(data);
 
             return;
 
@@ -244,6 +230,17 @@ socket.onmessage = (event) => {
         if (
             data.type === "typing"
         ) {
+
+            // Don't show our own typing notification.
+
+            if (
+                data.username === username
+            ) {
+
+                return;
+
+            }
+
 
             if (
                 data.typing
@@ -277,7 +274,6 @@ socket.onmessage = (event) => {
                 data.error
             );
 
-
             return;
 
         }
@@ -298,9 +294,7 @@ socket.onmessage = (event) => {
 // LOGIN RESPONSE
 // ============================================================
 
-function handleLoginResponse(
-    data
-) {
+function handleLoginResponse(data) {
 
     if (
         data.success
@@ -381,18 +375,13 @@ function handleLoginResponse(
 // HISTORY
 // ============================================================
 
-function handleHistory(
-    data
-) {
+function handleHistory(data) {
 
-    messages.innerHTML =
-        "";
+    messages.innerHTML = "";
 
 
     if (
-        !Array.isArray(
-            data.messages
-        )
+        !Array.isArray(data.messages)
     ) {
 
         return;
@@ -427,17 +416,38 @@ function addMessage(
     scroll = true
 ) {
 
-    /*
-     * Prevent duplicate messages.
-     *
-     * This is useful because the same message should
-     * only appear once in the UI.
-     */
+    // --------------------------------------------------------
+    // Validate message
+    // --------------------------------------------------------
 
     if (
+        !message ||
+        message.id === undefined ||
+        message.id === null
+    ) {
+
+        console.warn(
+            "Invalid message received:",
+            message
+        );
+
+        return;
+
+    }
+
+
+    // --------------------------------------------------------
+    // Prevent duplicate messages
+    // --------------------------------------------------------
+
+    const existingMessage =
         document.querySelector(
-            `[data-message-id="${message.id}"]`
-        )
+            `[data-message-id="${CSS.escape(String(message.id))}"]`
+        );
+
+
+    if (
+        existingMessage
     ) {
 
         return;
@@ -459,9 +469,7 @@ function addMessage(
 
 
     messageDiv.dataset.messageId =
-        String(
-            message.id
-        );
+        String(message.id);
 
 
     // ========================================================
@@ -469,8 +477,7 @@ function addMessage(
     // ========================================================
 
     if (
-        message.username ===
-        username
+        message.username === username
     ) {
 
         messageDiv.classList.add(
@@ -500,7 +507,7 @@ function addMessage(
 
 
     usernameElement.textContent =
-        message.username;
+        message.username || "Unknown";
 
 
     // ========================================================
@@ -533,7 +540,7 @@ function addMessage(
 
 
     messageElement.textContent =
-        message.message;
+        message.message || "";
 
 
     // ========================================================
@@ -569,11 +576,8 @@ function addMessage(
                 date.toLocaleTimeString(
                     [],
                     {
-                        hour:
-                            "2-digit",
-
-                        minute:
-                            "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit"
                     }
                 );
 
@@ -590,11 +594,9 @@ function addMessage(
         usernameElement
     );
 
-
     messageDiv.appendChild(
         messageElement
     );
-
 
     messageDiv.appendChild(
         timeElement
@@ -632,42 +634,22 @@ function addMessage(
 
 
     // ========================================================
-    // ADD TO DOM
+    // ADD MESSAGE TO DOM
     // ========================================================
 
     messages.appendChild(
         messageDiv
     );
+
+
     // ========================================================
-// SHOW ACTIONS WHEN MESSAGE IS CLICKED
-// ========================================================
+    // MESSAGE CLICK
+    // ========================================================
 
-messageDiv.addEventListener("click", (event) => {
-
-    // Don't toggle the message menu when clicking
-    // buttons or the reaction picker.
-    if (
-        event.target.closest(".message-actions") ||
-        event.target.closest(".reaction-picker")
-    ) {
-        return;
-    }
-
-    // Close all other message action menus
-    document
-        .querySelectorAll(".message-actions.active")
-        .forEach((item) => {
-
-            if (item !== actions) {
-                item.classList.remove("active");
-            }
-
-        });
-
-    // Toggle this message's actions
-    actions.classList.toggle("active");
-
-});
+    setupMessageClick(
+        messageDiv,
+        actions
+    );
 
 
     // ========================================================
@@ -687,12 +669,77 @@ messageDiv.addEventListener("click", (event) => {
 
 
 // ============================================================
+// SETUP MESSAGE CLICK
+// ============================================================
+
+function setupMessageClick(
+    messageDiv,
+    actions
+) {
+
+    messageDiv.addEventListener(
+        "click",
+        (event) => {
+
+            // ------------------------------------------------
+            // Ignore clicks inside action buttons/picker.
+            // ------------------------------------------------
+
+            if (
+                event.target.closest(
+                    ".message-actions"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            // ------------------------------------------------
+            // Close other action menus.
+            // ------------------------------------------------
+
+            document
+                .querySelectorAll(
+                    ".message-actions.active"
+                )
+                .forEach(
+                    (item) => {
+
+                        if (
+                            item !== actions
+                        ) {
+
+                            item.classList.remove(
+                                "active"
+                            );
+
+                        }
+
+                    }
+                );
+
+
+            // ------------------------------------------------
+            // Toggle this message's actions.
+            // ------------------------------------------------
+
+            actions.classList.toggle(
+                "active"
+            );
+
+        }
+    );
+
+}
+
+
+// ============================================================
 // CREATE REPLY PREVIEW
 // ============================================================
 
-function createReplyPreview(
-    reply
-) {
+function createReplyPreview(reply) {
 
     const preview =
         document.createElement("div");
@@ -704,9 +751,7 @@ function createReplyPreview(
 
 
     preview.dataset.replyMessageId =
-        String(
-            reply.id
-        );
+        String(reply.id);
 
 
     const name =
@@ -719,7 +764,7 @@ function createReplyPreview(
 
 
     name.textContent =
-        `↩ ${reply.username}`;
+        `↩ ${reply.username || "Unknown"}`;
 
 
     const text =
@@ -732,13 +777,12 @@ function createReplyPreview(
 
 
     text.textContent =
-        reply.message;
+        reply.message || "";
 
 
     preview.appendChild(
         name
     );
-
 
     preview.appendChild(
         text
@@ -751,7 +795,9 @@ function createReplyPreview(
 
     preview.addEventListener(
         "click",
-        () => {
+        (event) => {
+
+            event.stopPropagation();
 
             scrollToMessage(
                 reply.id
@@ -772,87 +818,133 @@ function createReplyPreview(
 
 function createMessageActions(message) {
 
-    const actions = document.createElement("div");
+    const actions =
+        document.createElement("div");
 
-    actions.classList.add("message-actions");
+
+    actions.classList.add(
+        "message-actions"
+    );
 
 
     // ========================================================
     // REPLY BUTTON
     // ========================================================
 
-    const replyButton = document.createElement("button");
-
-    replyButton.type = "button";
-
-    replyButton.classList.add("reply-button");
-
-    replyButton.textContent = "↩ Reply";
-
-    replyButton.addEventListener("click", (event) => {
-
-        event.stopPropagation();
-
-        startReply(message);
-
-        actions.classList.remove("active");
-
-    });
+    const replyButton =
+        document.createElement("button");
 
 
-    actions.appendChild(replyButton);
+    replyButton.type =
+        "button";
+
+
+    replyButton.classList.add(
+        "reply-button"
+    );
+
+
+    replyButton.textContent =
+        "↩ Reply";
+
+
+    replyButton.addEventListener(
+        "click",
+        (event) => {
+
+            event.stopPropagation();
+
+
+            startReply(
+                message
+            );
+
+
+            actions.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    actions.appendChild(
+        replyButton
+    );
 
 
     // ========================================================
     // REACT BUTTON
     // ========================================================
 
-    const reactButton = document.createElement("button");
-
-    reactButton.type = "button";
-
-    reactButton.classList.add("react-button");
-
-    reactButton.textContent = "😊 React";
-
-    reactButton.addEventListener("click", (event) => {
-
-        event.stopPropagation();
-
-        toggleReactionPicker(
-            messageDivFromButton(reactButton)
-        );
-
-    });
+    const reactButton =
+        document.createElement("button");
 
 
-    actions.appendChild(reactButton);
+    reactButton.type =
+        "button";
+
+
+    reactButton.classList.add(
+        "react-button"
+    );
+
+
+    reactButton.textContent =
+        "😊 React";
+
+
+    reactButton.addEventListener(
+        "click",
+        (event) => {
+
+            event.stopPropagation();
+
+
+            const messageDiv =
+                reactButton.closest(
+                    ".message"
+                );
+
+
+            if (
+                !messageDiv
+            ) {
+
+                return;
+
+            }
+
+
+            toggleReactionPicker(
+                messageDiv
+            );
+
+        }
+    );
+
+
+    actions.appendChild(
+        reactButton
+    );
 
 
     // ========================================================
     // REACTION PICKER
     // ========================================================
 
-    const picker = createReactionPicker(message);
+    const picker =
+        createReactionPicker(
+            message
+        );
 
-    actions.appendChild(picker);
+
+    actions.appendChild(
+        picker
+    );
 
 
     return actions;
-}
-
-
-// ============================================================
-// GET MESSAGE DIV FROM BUTTON
-// ============================================================
-
-function messageDivFromButton(
-    button
-) {
-
-    return button.closest(
-        ".message"
-    );
 
 }
 
@@ -861,9 +953,7 @@ function messageDivFromButton(
 // CREATE REACTION PICKER
 // ============================================================
 
-function createReactionPicker(
-    message
-) {
+function createReactionPicker(message) {
 
     const picker =
         document.createElement("div");
@@ -880,7 +970,7 @@ function createReactionPicker(
         "😂",
         "😮",
         "😢",
-        "👎",
+        "👎"
     ];
 
 
@@ -906,6 +996,12 @@ function createReactionPicker(
 
             choice.title =
                 `React ${reaction}`;
+
+
+            choice.setAttribute(
+                "aria-label",
+                `React ${reaction}`
+            );
 
 
             choice.addEventListener(
@@ -950,6 +1046,15 @@ function toggleReactionPicker(
     messageDiv
 ) {
 
+    if (
+        !messageDiv
+    ) {
+
+        return;
+
+    }
+
+
     const picker =
         messageDiv.querySelector(
             ".reaction-picker"
@@ -972,7 +1077,7 @@ function toggleReactionPicker(
 
 
     // --------------------------------------------------------
-    // Close every picker
+    // Close all pickers
     // --------------------------------------------------------
 
     document
@@ -991,7 +1096,7 @@ function toggleReactionPicker(
 
 
     // --------------------------------------------------------
-    // Open this one if it wasn't already open
+    // Open selected picker
     // --------------------------------------------------------
 
     if (
@@ -1011,9 +1116,7 @@ function toggleReactionPicker(
 // CREATE REACTION CONTAINER
 // ============================================================
 
-function createReactionContainer(
-    message
-) {
+function createReactionContainer(message) {
 
     const container =
         document.createElement("div");
@@ -1067,41 +1170,56 @@ function renderReactions(
     ).forEach(
         ([reaction, count]) => {
 
-            const button =
+            // Don't display empty reactions.
+
+            if (
+                Number(count) <= 0
+            ) {
+
+                return;
+
+            }
+
+
+            const reactionButton =
                 document.createElement("button");
 
 
-            button.type =
+            reactionButton.type =
                 "button";
 
 
-            button.classList.add(
+            reactionButton.classList.add(
                 "message-reaction"
             );
 
 
-            button.textContent =
+            reactionButton.textContent =
                 `${reaction} ${count}`;
 
 
             // ------------------------------------------------
-            // Determine whether current user reacted
+            // Users who selected this reaction
             // ------------------------------------------------
 
             const users =
                 reactionUsers &&
-                reactionUsers[reaction]
+                Array.isArray(
+                    reactionUsers[reaction]
+                )
                     ? reactionUsers[reaction]
                     : [];
 
 
+            // ------------------------------------------------
+            // Highlight current user's reaction
+            // ------------------------------------------------
+
             if (
-                users.includes(
-                    username
-                )
+                users.includes(username)
             ) {
 
-                button.classList.add(
+                reactionButton.classList.add(
                     "mine"
                 );
 
@@ -1116,21 +1234,22 @@ function renderReactions(
                 users.length > 0
             ) {
 
-                button.title =
-                    users.join(
-                        ", "
-                    );
+                reactionButton.title =
+                    users.join(", ");
 
             }
 
 
             // ------------------------------------------------
-            // Clicking an existing reaction toggles it
+            // Click reaction → toggle reaction
             // ------------------------------------------------
 
-            button.addEventListener(
+            reactionButton.addEventListener(
                 "click",
-                () => {
+                (event) => {
+
+                    event.stopPropagation();
+
 
                     sendReaction(
                         messageId,
@@ -1142,7 +1261,7 @@ function renderReactions(
 
 
             container.appendChild(
-                button
+                reactionButton
             );
 
         }
@@ -1174,6 +1293,10 @@ function sendReaction(
         WebSocket.OPEN
     ) {
 
+        console.error(
+            "Cannot send reaction: WebSocket not connected"
+        );
+
         return;
 
     }
@@ -1189,7 +1312,7 @@ function sendReaction(
                 messageId,
 
             reaction:
-                reaction,
+                reaction
 
         })
     );
@@ -1201,13 +1324,21 @@ function sendReaction(
 // UPDATE REACTIONS
 // ============================================================
 
-function updateMessageReactions(
-    data
-) {
+function updateMessageReactions(data) {
+
+    if (
+        data.messageId === undefined ||
+        data.messageId === null
+    ) {
+
+        return;
+
+    }
+
 
     const messageDiv =
         document.querySelector(
-            `[data-message-id="${data.messageId}"]`
+            `[data-message-id="${CSS.escape(String(data.messageId))}"]`
         );
 
 
@@ -1249,9 +1380,7 @@ function updateMessageReactions(
 // START REPLY
 // ============================================================
 
-function startReply(
-    message
-) {
+function startReply(message) {
 
     replyingToMessage =
         message;
@@ -1285,7 +1414,6 @@ function startReply(
             "Reply bar elements are missing from HTML."
         );
 
-
         return;
 
     }
@@ -1308,12 +1436,12 @@ function startReply(
 
 
     // --------------------------------------------------------
-    // Scroll input area into view on mobile
+    // Mobile
     // --------------------------------------------------------
 
     replyBar.scrollIntoView({
         behavior: "smooth",
-        block: "nearest",
+        block: "nearest"
     });
 
 }
@@ -1387,13 +1515,11 @@ function cancelReply() {
 // SCROLL TO MESSAGE
 // ============================================================
 
-function scrollToMessage(
-    messageId
-) {
+function scrollToMessage(messageId) {
 
     const target =
         document.querySelector(
-            `[data-message-id="${messageId}"]`
+            `[data-message-id="${CSS.escape(String(messageId))}"]`
         );
 
 
@@ -1406,7 +1532,6 @@ function scrollToMessage(
             messageId
         );
 
-
         return;
 
     }
@@ -1414,7 +1539,7 @@ function scrollToMessage(
 
     target.scrollIntoView({
         behavior: "smooth",
-        block: "center",
+        block: "center"
     });
 
 
@@ -1423,7 +1548,7 @@ function scrollToMessage(
     );
 
 
-    // Force animation restart
+    // Restart animation.
 
     void target.offsetWidth;
 
@@ -1474,7 +1599,6 @@ function sendMessage() {
             "Cannot send message: not authenticated"
         );
 
-
         return;
 
     }
@@ -1489,7 +1613,6 @@ function sendMessage() {
             "Cannot send message: WebSocket not connected"
         );
 
-
         return;
 
     }
@@ -1499,26 +1622,11 @@ function sendMessage() {
     // Stop typing
     // --------------------------------------------------------
 
-    clearTimeout(
-        typingTimeout
-    );
-
-
-    socket.send(
-        JSON.stringify({
-
-            type:
-                "typing",
-
-            typing:
-                false,
-
-        })
-    );
+    stopTyping();
 
 
     // --------------------------------------------------------
-    // Build message
+    // Build payload
     // --------------------------------------------------------
 
     const payload = {
@@ -1527,13 +1635,13 @@ function sendMessage() {
             "message",
 
         message:
-            message,
+            message
 
     };
 
 
     // --------------------------------------------------------
-    // Add reply if replying
+    // Add reply
     // --------------------------------------------------------
 
     if (
@@ -1557,14 +1665,12 @@ function sendMessage() {
     // --------------------------------------------------------
 
     socket.send(
-        JSON.stringify(
-            payload
-        )
+        JSON.stringify(payload)
     );
 
 
     // --------------------------------------------------------
-    // Clear
+    // Clear input
     // --------------------------------------------------------
 
     input.value =
@@ -1654,10 +1760,126 @@ function joinChat() {
                 enteredUsername,
 
             roomKey:
-                roomKey,
+                roomKey
 
         })
     );
+
+}
+
+
+// ============================================================
+// TYPING
+// ============================================================
+
+function startTyping() {
+
+    if (
+        !authenticated
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        socket.readyState !==
+        WebSocket.OPEN
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !currentlyTyping
+    ) {
+
+        currentlyTyping =
+            true;
+
+
+        socket.send(
+            JSON.stringify({
+
+                type:
+                    "typing",
+
+                typing:
+                    true
+
+            })
+        );
+
+    }
+
+
+    clearTimeout(
+        typingTimeout
+    );
+
+
+    typingTimeout =
+        setTimeout(
+            () => {
+
+                stopTyping();
+
+            },
+            1000
+        );
+
+}
+
+
+// ============================================================
+// STOP TYPING
+// ============================================================
+
+function stopTyping() {
+
+    clearTimeout(
+        typingTimeout
+    );
+
+
+    typingTimeout =
+        null;
+
+
+    if (
+        !currentlyTyping
+    ) {
+
+        return;
+
+    }
+
+
+    currentlyTyping =
+        false;
+
+
+    if (
+        socket.readyState ===
+        WebSocket.OPEN
+    ) {
+
+        socket.send(
+            JSON.stringify({
+
+                type:
+                    "typing",
+
+                typing:
+                    false
+
+            })
+        );
+
+    }
 
 }
 
@@ -1691,8 +1913,7 @@ usernameInput.addEventListener(
     (event) => {
 
         if (
-            event.key ===
-            "Enter"
+            event.key === "Enter"
         ) {
 
             event.preventDefault();
@@ -1714,8 +1935,7 @@ roomKeyInput.addEventListener(
     (event) => {
 
         if (
-            event.key ===
-            "Enter"
+            event.key === "Enter"
         ) {
 
             event.preventDefault();
@@ -1752,7 +1972,7 @@ input.addEventListener(
 
 
 // ============================================================
-// TYPING + TEXTAREA RESIZE
+// MESSAGE INPUT
 // ============================================================
 
 input.addEventListener(
@@ -1760,7 +1980,7 @@ input.addEventListener(
     () => {
 
         // ----------------------------------------------------
-        // Resize
+        // Resize textarea
         // ----------------------------------------------------
 
         input.style.height =
@@ -1778,95 +1998,56 @@ input.addEventListener(
         // Typing
         // ----------------------------------------------------
 
-        if (
-            !authenticated
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            socket.readyState !==
-            WebSocket.OPEN
-        ) {
-
-            return;
-
-        }
-
-
-        socket.send(
-            JSON.stringify({
-
-                type:
-                    "typing",
-
-                typing:
-                    true,
-
-            })
-        );
-
-
-        clearTimeout(
-            typingTimeout
-        );
-
-
-        typingTimeout =
-            setTimeout(
-                () => {
-
-                    if (
-                        socket.readyState ===
-                        WebSocket.OPEN
-                    ) {
-
-                        socket.send(
-                            JSON.stringify({
-
-                                type:
-                                    "typing",
-
-                                typing:
-                                    false,
-
-                            })
-                        );
-
-                    }
-
-                },
-                1000
-            );
+        startTyping();
 
     }
 );
 
 
 // ============================================================
-// CLICK OUTSIDE REACTION PICKERS
+// CLICK OUTSIDE MENUS
 // ============================================================
 
 document.addEventListener(
     "click",
     (event) => {
 
+        // ----------------------------------------------------
+        // Clicking inside a message is handled by that
+        // message itself.
+        // ----------------------------------------------------
+
         if (
-            event.target.closest(
-                ".react-button"
-            ) ||
-            event.target.closest(
-                ".reaction-picker"
-            )
+            event.target.closest(".message")
         ) {
 
             return;
 
         }
 
+
+        // ----------------------------------------------------
+        // Close action menus.
+        // ----------------------------------------------------
+
+        document
+            .querySelectorAll(
+                ".message-actions.active"
+            )
+            .forEach(
+                (actions) => {
+
+                    actions.classList.remove(
+                        "active"
+                    );
+
+                }
+            );
+
+
+        // ----------------------------------------------------
+        // Close reaction pickers.
+        // ----------------------------------------------------
 
         document
             .querySelectorAll(
@@ -1887,70 +2068,7 @@ document.addEventListener(
 
 
 // ============================================================
-// DISCONNECT
-// ============================================================
-
-socket.onclose = () => {
-
-    console.log(
-        "WebSocket disconnected"
-    );
-
-
-    authenticated =
-        false;
-
-
-    typingIndicator.textContent =
-        "";
-
-
-    connectionStatus.textContent =
-        "● Offline";
-
-
-    connectionStatus.classList.remove(
-        "connected"
-    );
-
-
-    connectionStatus.classList.add(
-        "disconnected"
-    );
-
-};
-
-
-// ============================================================
-// WEBSOCKET ERROR
-// ============================================================
-
-socket.onerror = (error) => {
-
-    console.error(
-        "WebSocket error:",
-        error
-    );
-
-
-    connectionStatus.textContent =
-        "● Connection error";
-
-
-    connectionStatus.classList.remove(
-        "connected"
-    );
-
-
-    connectionStatus.classList.add(
-        "disconnected"
-    );
-
-};
-
-
-// ============================================================
-// REPLY BAR SETUP
+// CANCEL REPLY BUTTON
 // ============================================================
 
 const cancelReplyButton =
@@ -1965,7 +2083,15 @@ if (
 
     cancelReplyButton.addEventListener(
         "click",
-        cancelReply
+        (event) => {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            cancelReply();
+
+        }
     );
 
 }
@@ -2019,7 +2145,12 @@ if (
 
     themeToggle.addEventListener(
         "click",
-        () => {
+        (event) => {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
 
             const isDark =
                 document.body.classList.toggle(
@@ -2044,6 +2175,78 @@ if (
     );
 
 }
+
+
+// ============================================================
+// DISCONNECT
+// ============================================================
+
+socket.onclose = () => {
+
+    console.log(
+        "WebSocket disconnected"
+    );
+
+
+    authenticated =
+        false;
+
+
+    currentlyTyping =
+        false;
+
+
+    clearTimeout(
+        typingTimeout
+    );
+
+
+    typingIndicator.textContent =
+        "";
+
+
+    connectionStatus.textContent =
+        "● Offline";
+
+
+    connectionStatus.classList.remove(
+        "connected"
+    );
+
+
+    connectionStatus.classList.add(
+        "disconnected"
+    );
+
+};
+
+
+// ============================================================
+// WEBSOCKET ERROR
+// ============================================================
+
+socket.onerror = (error) => {
+
+    console.error(
+        "WebSocket error:",
+        error
+    );
+
+
+    connectionStatus.textContent =
+        "● Connection error";
+
+
+    connectionStatus.classList.remove(
+        "connected"
+    );
+
+
+    connectionStatus.classList.add(
+        "disconnected"
+    );
+
+};
 
 
 // ============================================================
